@@ -10,7 +10,7 @@ export interface Modifier {
  * Represents a node in the SwiftUI view tree
  */
 export interface ViewNode {
-    kind: "VStack" | "HStack" | "ZStack" | "Text" | "Image" | "Spacer" | "Custom";
+    kind: "VStack" | "HStack" | "ZStack" | "Text" | "Image" | "Spacer" | "List" | "Form" | "Section" | "ForEach" | "ScrollView" | "Custom";
     props: Record<string, any>;
     modifiers: Modifier[];
     children: ViewNode[];

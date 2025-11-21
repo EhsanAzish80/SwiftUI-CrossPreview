@@ -201,12 +201,12 @@ function getPreviewHtml(webview: vscode.Webview, context: vscode.ExtensionContex
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
             margin: 0;
             padding: 20px;
-            background-color: #1D1D1F;
-            color: #d4d4d4;
+            background-color: #f2f2f7;
+            color: #333333;
         }
         
         h1 {
-            color: #ffffff;
+            color: #1d1d1f;
             margin: 0 0 8px 0;
             font-size: 18px;
             font-weight: 600;
@@ -227,8 +227,9 @@ function getPreviewHtml(webview: vscode.Webview, context: vscode.ExtensionContex
             align-items: center;
             margin-bottom: 16px;
             padding: 8px 12px;
-            background-color: #252526;
+            background-color: #ffffff;
             border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
         
         #status {
@@ -262,15 +263,18 @@ function getPreviewHtml(webview: vscode.Webview, context: vscode.ExtensionContex
         }
         
         #device-bezel.device-phone {
-            max-width: 430px;
+            width: 430px;
+            height: 880px;
         }
         
         #device-bezel.device-tablet {
-            max-width: 820px;
+            width: 820px;
+            height: 1100px;
         }
         
         #device-bezel.device-desktop {
-            max-width: 1024px;
+            width: 1024px;
+            height: 768px;
         }
         
         #dynamic-island {
@@ -290,8 +294,9 @@ function getPreviewHtml(webview: vscode.Webview, context: vscode.ExtensionContex
             margin-top: 36px;
             background: #ffffff;
             border-radius: 32px;
-            overflow: hidden;
-            min-height: 600px;
+            overflow-y: auto;
+            overflow-x: hidden;
+            height: 792px;
             padding: 16px;
         }
         
@@ -332,9 +337,9 @@ function getPreviewHtml(webview: vscode.Webview, context: vscode.ExtensionContex
         }
         
         #device-select {
-            background-color: #2d2d30;
-            color: #d4d4d4;
-            border: 1px solid #454545;
+            background-color: #ffffff;
+            color: #1d1d1f;
+            border: 1px solid #d1d1d6;
             border-radius: 4px;
             padding: 6px 12px;
             font-size: 13px;
@@ -342,7 +347,7 @@ function getPreviewHtml(webview: vscode.Webview, context: vscode.ExtensionContex
         }
         
         #device-select:hover {
-            background-color: #3c3c3c;
+            background-color: #f5f5f5;
         }
         
         .error-banner {
@@ -371,6 +376,13 @@ function getPreviewHtml(webview: vscode.Webview, context: vscode.ExtensionContex
         #root {
             background-color: transparent;
             min-height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+        
+        .content-wrapper {
+            width: 100%;
         }
         
         .status {
@@ -414,6 +426,55 @@ function getPreviewHtml(webview: vscode.Webview, context: vscode.ExtensionContex
         
         .spacer {
           flex: 1;
+        }
+        
+        .list {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+          background: #ffffff;
+          border-radius: 12px;
+          padding: 8px;
+        }
+        
+        .form {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+          background: #ffffff;
+          border-radius: 12px;
+          padding: 12px;
+        }
+        
+        .section {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+        }
+        
+        .section-header {
+          text-transform: uppercase;
+          font-size: 11px;
+          font-weight: 600;
+          color: #8e8e93;
+          padding: 8px 12px 4px;
+        }
+        
+        .section-body {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+        }
+        
+        .scrollview {
+          max-height: 320px;
+          overflow-y: auto;
+          display: flex;
+          flex-direction: column;
+        }
+        
+        .foreach {
+          display: contents;
         }
     </style>
 </head>
@@ -642,6 +703,22 @@ function getPreviewHtml(webview: vscode.Webview, context: vscode.ExtensionContex
                         case 'Spacer':
                             baseHtml = '<div class="spacer"' + style + '></div>';
                             break;
+                        case 'List':
+                            baseHtml = '<div class="list"' + style + '>' + n.children.map(renderNode).join('') + '</div>';
+                            break;
+                        case 'Form':
+                            baseHtml = '<div class="form"' + style + '>' + n.children.map(renderNode).join('') + '</div>';
+                            break;
+                        case 'Section':
+                            var headerHtml = n.props.header ? '<div class="section-header">' + escapeHtml(n.props.header) + '</div>' : '';
+                            baseHtml = '<div class="section"' + style + '>' + headerHtml + '<div class="section-body">' + n.children.map(renderNode).join('') + '</div></div>';
+                            break;
+                        case 'ScrollView':
+                            baseHtml = '<div class="scrollview"' + style + '>' + n.children.map(renderNode).join('') + '</div>';
+                            break;
+                        case 'ForEach':
+                            baseHtml = renderForEach(n);
+                            break;
                         default:
                             baseHtml = '<div class="custom"' + style + '>' + escapeHtml(n.kind) + '</div>';
                     }
@@ -657,6 +734,46 @@ function getPreviewHtml(webview: vscode.Webview, context: vscode.ExtensionContex
                     }
                     
                     return baseHtml;
+                }
+                
+                function renderForEach(n) {
+                    if (!n.props.rowTemplate) {
+                        return '<div class="foreach"></div>';
+                    }
+                    
+                    var iterations = 0;
+                    var items = [];
+                    
+                    if (n.props.forEachRange) {
+                        var start = n.props.forEachRange.start;
+                        var end = n.props.forEachRange.end;
+                        iterations = end - start;
+                        for (var i = start; i < end; i++) {
+                            items.push(i);
+                        }
+                    } else if (n.props.forEachItems) {
+                        iterations = n.props.forEachItems.length;
+                        items = n.props.forEachItems.slice();
+                    }
+                    
+                    var rows = [];
+                    for (var i = 0; i < iterations; i++) {
+                        var cloned = cloneViewNode(n.props.rowTemplate);
+                        rows.push(renderNode(cloned));
+                    }
+                    
+                    return '<div class="foreach">' + rows.join('') + '</div>';
+                }
+                
+                function cloneViewNode(node) {
+                    return {
+                        kind: node.kind,
+                        props: Object.assign({}, node.props),
+                        modifiers: node.modifiers ? node.modifiers.map(function(m) {
+                            return { name: m.name, args: Object.assign({}, m.args) };
+                        }) : [],
+                        children: node.children ? node.children.map(cloneViewNode) : []
+                    };
                 }
                 
                 function escapeHtml(str) {
@@ -703,9 +820,9 @@ function getPreviewHtml(webview: vscode.Webview, context: vscode.ExtensionContex
                     
                     // Update root content
                     if (msg.root) {
-                        rootEl.innerHTML = renderToHtml(msg.root);
+                        rootEl.innerHTML = '<div class="content-wrapper">' + renderToHtml(msg.root) + '</div>';
                     } else if (msg.html) {
-                        rootEl.innerHTML = msg.html;
+                        rootEl.innerHTML = '<div class="content-wrapper">' + msg.html + '</div>';
                     } else {
                         rootEl.innerHTML = '<div class="empty">No preview available</div>';
                     }

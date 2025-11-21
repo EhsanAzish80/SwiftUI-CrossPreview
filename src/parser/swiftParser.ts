@@ -294,7 +294,167 @@ function parseCallExpression(node: any, source: string): ViewNode | null {
         };
     }
 
+    // Handle List { ... }
+    if (functionName === 'List') {
+        return parseContainerView(node, 'List', source);
+    }
+
+    // Handle Form { ... }
+    if (functionName === 'Form') {
+        return parseContainerView(node, 'Form', source);
+    }
+
+    // Handle Section(header: Text("...")) { ... }
+    if (functionName === 'Section') {
+        const props: Record<string, any> = {};
+        const children: ViewNode[] = [];
+        
+        const args = node.children.find(c => c.type === 'call_suffix' || c.type === 'lambda_literal');
+        if (args) {
+            // Look for header argument
+            const valueArgs = args.children.filter(c => c.type === 'value_argument');
+            for (const valueArg of valueArgs) {
+                const label = valueArg.children.find(c => c.type === 'value_argument_label');
+                if (label && label.text.includes('header')) {
+                    const headerExpr = valueArg.children.find(c => 
+                        c.type === 'call_expression' || c.type === 'postfix_expression'
+                    );
+                    if (headerExpr) {
+                        const headerNode = parseViewExpression(headerExpr, source);
+                        if (headerNode) {
+                            props.header = headerNode;
+                        }
+                    }
+                }
+            }
+            
+            // Find closure/trailing closure for body
+            for (const arg of args.children) {
+                if (arg.type === 'lambda_literal' || arg.type === 'closure_expression') {
+                    const statements = findStatementsInClosure(arg);
+                    for (const stmt of statements) {
+                        const child = parseViewExpression(stmt, source);
+                        if (child) {
+                            children.push(child);
+                        }
+                    }
+                }
+            }
+        }
+        
+        return {
+            kind: 'Section',
+            props,
+            modifiers: [],
+            children
+        };
+    }
+
+    // Handle ScrollView { ... } or ScrollView(.vertical) { ... }
+    if (functionName === 'ScrollView') {
+        return parseContainerView(node, 'ScrollView', source);
+    }
+
+    // Handle ForEach patterns
+    if (functionName === 'ForEach') {
+        return parseForEach(node, source);
+    }
+
     return null;
+}
+
+/**
+ * Helper to parse container views (List, Form, ScrollView)
+ */
+function parseContainerView(node: any, kind: "List" | "Form" | "ScrollView", source: string): ViewNode {
+    const children: ViewNode[] = [];
+    const args = node.children.find(c => c.type === 'call_suffix' || c.type === 'lambda_literal');
+    
+    if (args) {
+        for (const arg of args.children) {
+            if (arg.type === 'lambda_literal' || arg.type === 'closure_expression') {
+                const statements = findStatementsInClosure(arg);
+                for (const stmt of statements) {
+                    const child = parseViewExpression(stmt, source);
+                    if (child) {
+                        children.push(child);
+                    }
+                }
+            }
+        }
+    }
+    
+    return {
+        kind,
+        props: {},
+        modifiers: [],
+        children
+    };
+}
+
+/**
+ * Parse ForEach patterns
+ */
+function parseForEach(node: any, source: string): ViewNode {
+    const props: Record<string, any> = {};
+    let rowTemplate: ViewNode | null = null;
+    
+    const args = node.children.find(c => c.type === 'call_suffix');
+    
+    if (args) {
+        // Look for the first argument (range or array)
+        const valueArgs = args.children.filter(c => 
+            c.type === 'value_argument' || 
+            c.type === 'binary_expression' ||
+            c.type === 'array_literal' ||
+            c.type === 'integer_literal'
+        );
+        
+        for (const arg of valueArgs) {
+            // Check for range expression like 1..<4
+            if (arg.type === 'binary_expression' || arg.text?.includes('..<') || arg.text?.includes('...')) {
+                const rangeText = arg.text || '';
+                const rangeMatch = rangeText.match(/(\d+)\s*\.\.<?(\d+)/);
+                if (rangeMatch) {
+                    const start = parseInt(rangeMatch[1]);
+                    const end = parseInt(rangeMatch[2]);
+                    props.forEachRange = { start, end: rangeMatch[0].includes('..<') ? end : end + 1 };
+                    break;
+                }
+            }
+            
+            // Check for array literal
+            if (arg.type === 'array_literal' || arg.type === 'value_argument') {
+                const arrayText = arg.text || '';
+                const stringMatches = arrayText.match(/"([^"]+)"/g);
+                if (stringMatches && stringMatches.length > 0) {
+                    props.forEachItems = stringMatches.map(s => s.replace(/"/g, ''));
+                    break;
+                }
+            }
+        }
+        
+        // Find trailing closure for row template
+        for (const arg of args.children) {
+            if (arg.type === 'lambda_literal' || arg.type === 'closure_expression') {
+                const statements = findStatementsInClosure(arg);
+                if (statements.length > 0) {
+                    rowTemplate = parseViewExpression(statements[0], source);
+                    if (rowTemplate) {
+                        props.rowTemplate = rowTemplate;
+                    }
+                }
+                break;
+            }
+        }
+    }
+    
+    return {
+        kind: 'ForEach',
+        props,
+        modifiers: [],
+        children: [] // Children will be expanded by renderer
+    };
 }
 
 /**
@@ -605,68 +765,132 @@ function parseWithRegex(source: string): ParseResult {
 function parseRegexView(content: string): ViewNode | null {
     content = content.trim();
     
+    // Match List/Form/ScrollView with their content
+    const containerMatch = content.match(/^(List|Form|ScrollView)\s*\{/);
+    if (containerMatch) {
+        const kind = containerMatch[1] as "List" | "Form" | "ScrollView";
+        return parseRegexContainer(content, kind);
+    }
+    
     // Match VStack/HStack/ZStack with their content
     const stackMatch = content.match(/^(VStack|HStack|ZStack)\s*\{/);
     if (stackMatch) {
         const kind = stackMatch[1] as "VStack" | "HStack" | "ZStack";
-        
-        // Find the matching closing brace for this stack
-        let braceCount = 1;
-        let i = stackMatch[0].length;
-        
-        while (braceCount > 0 && i < content.length) {
-            if (content[i] === '{') braceCount++;
-            if (content[i] === '}') braceCount--;
-            i++;
+        return parseRegexContainer(content, kind);
+    }
+    
+    // Match ForEach patterns
+    const forEachMatch = content.match(/^ForEach\s*\(/);
+    if (forEachMatch) {
+        return parseRegexForEach(content);
+    }
+    
+    // Match simple Text
+    const textMatch = content.match(/^Text\("([^"]+)"\)/);
+    if (textMatch) {
+        return {
+            kind: 'Text',
+            props: { text: textMatch[1] },
+            modifiers: [],
+            children: []
+        };
+    }
+    
+    return null;
+}
+
+/**
+ * Parse container views (VStack, HStack, ZStack, List, Form, ScrollView) with regex
+ */
+function parseRegexContainer(content: string, kind: "VStack" | "HStack" | "ZStack" | "List" | "Form" | "ScrollView"): ViewNode {
+    const stackProps: Record<string, any> = {};
+    
+    // Try to parse stack parameters (alignment, spacing) if applicable
+    const stackParamsMatch = content.match(/^(VStack|HStack|ZStack)\s*\(([^)]*)\)/);
+    if (stackParamsMatch) {
+        const params = stackParamsMatch[2];
+        const alignmentMatch = params.match(/alignment:\s*\.(\w+)/);
+        const spacingMatch = params.match(/spacing:\s*([\d.]+)/);
+        if (alignmentMatch) stackProps.alignment = alignmentMatch[1];
+        if (spacingMatch) stackProps.spacing = parseFloat(spacingMatch[1]);
+    }
+    
+    // Find the opening brace
+    const openBraceIndex = content.indexOf('{');
+    if (openBraceIndex === -1) {
+        return { kind, props: stackProps, modifiers: [], children: [] };
+    }
+    
+    // Find matching closing brace
+    let braceCount = 1;
+    let i = openBraceIndex + 1;
+    
+    while (braceCount > 0 && i < content.length) {
+        if (content[i] === '{') braceCount++;
+        if (content[i] === '}') braceCount--;
+        i++;
+    }
+    
+    const innerContent = content.substring(openBraceIndex + 1, i - 1).trim();
+    const children: ViewNode[] = [];
+    
+    // Parse child views (Text, ForEach, Section, etc.)
+    let pos = 0;
+    while (pos < innerContent.length) {
+        // Try ForEach
+        const forEachMatch = innerContent.substring(pos).match(/ForEach\s*\([^{]*\{/);
+        if (forEachMatch && forEachMatch.index !== undefined) {
+            const forEachStart = pos + forEachMatch.index;
+            // Find the full ForEach block
+            const forEachNode = parseRegexForEach(innerContent.substring(forEachStart));
+            if (forEachNode) {
+                children.push(forEachNode);
+                pos = forEachStart + 50; // rough skip
+                continue;
+            }
         }
         
-        const innerContent = content.substring(stackMatch[0].length, i - 1).trim();
-        const children: ViewNode[] = [];
-        
-        // Parse Text views with modifiers
-        let pos = 0;
-        while (pos < innerContent.length) {
-            const textMatch = innerContent.substring(pos).match(/Text\("([^"]+)"\)/);
-            if (textMatch && textMatch.index !== undefined) {
-                const text = textMatch[1];
-                const textStart = pos + textMatch.index;
-                const textEnd = textStart + textMatch[0].length;
+        // Try Text
+        const textMatch = innerContent.substring(pos).match(/Text\("([^"]+)"\)/);
+        if (textMatch && textMatch.index !== undefined) {
+            const text = textMatch[1];
+            const textStart = pos + textMatch.index;
+            const textEnd = textStart + textMatch[0].length;
+            
+            // Look for modifiers after this Text
+            let currentPos = textEnd;
+            const modifiers: Modifier[] = [];
+            
+            while (currentPos < innerContent.length) {
+                const remaining = innerContent.substring(currentPos);
                 
-                // Look for modifiers after this Text
-                let currentPos = textEnd;
-                const modifiers: Modifier[] = [];
+                // Check if next non-whitespace is a dot (modifier)
+                const nextContent = remaining.trim();
+                if (!nextContent.startsWith('.')) {
+                    break;
+                }
                 
-                while (currentPos < innerContent.length) {
-                    const remaining = innerContent.substring(currentPos);
+                // Parse modifier
+                const modMatch = nextContent.match(/^\.(\w+)\(([^)]*)\)/);
+                if (modMatch) {
+                    const modName = modMatch[1];
+                    const modArgs = modMatch[2];
                     
-                    // Check if next non-whitespace is a dot (modifier)
-                    const nextContent = remaining.trim();
-                    if (!nextContent.startsWith('.')) {
-                        break;
-                    }
+                    // Parse modifier arguments
+                    const args: Record<string, any> = {};
                     
-                    // Parse modifier
-                    const modMatch = nextContent.match(/^\.(\w+)\(([^)]*)\)/);
-                    if (modMatch) {
-                        const modName = modMatch[1];
-                        const modArgs = modMatch[2];
-                        
-                        // Parse modifier arguments
-                        const args: Record<string, any> = {};
-                        
-                        if (modName === 'padding' && modArgs) {
-                            const num = parseFloat(modArgs);
-                            if (!isNaN(num)) args.all = num;
-                        } else if (modName === 'font' && modArgs) {
-                            const fontMatch = modArgs.match(/\.(\w+)/);
-                            if (fontMatch) args.style = fontMatch[1];
-                        } else if (modName === 'foregroundColor' && modArgs) {
-                            const colorMatch = modArgs.match(/\.(\w+)/);
-                            if (colorMatch) args.color = colorMatch[1];
-                        } else if (modName === 'background' && modArgs) {
-                            // Check for material or color
-                            const materialMatch = modArgs.match(/\.(ultraThin|thin|regular)Material/);
-                            const colorMatch = modArgs.match(/Color\.(\w+)/);
+                    if (modName === 'padding' && modArgs) {
+                        const num = parseFloat(modArgs);
+                        if (!isNaN(num)) args.all = num;
+                    } else if (modName === 'font' && modArgs) {
+                        const fontMatch = modArgs.match(/\.(\w+)/);
+                        if (fontMatch) args.style = fontMatch[1];
+                    } else if (modName === 'foregroundColor' && modArgs) {
+                        const colorMatch = modArgs.match(/\.(\w+)/);
+                        if (colorMatch) args.color = colorMatch[1];
+                    } else if (modName === 'background' && modArgs) {
+                        // Check for material or color
+                        const materialMatch = modArgs.match(/\.(ultraThin|thin|regular)Material/);                            const colorMatch = modArgs.match(/Color\.(\w+)/);
                             if (materialMatch) {
                                 args.material = materialMatch[1];
                             } else if (colorMatch) {
@@ -723,89 +947,118 @@ function parseRegexView(content: string): ViewNode | null {
             }
         }
         
-        // Parse modifiers on the VStack itself
-        const stackModifiers: Modifier[] = [];
-        const stackProps: Record<string, any> = {};
-        
-        // Try to parse VStack parameters (alignment, spacing)
-        const stackParamsMatch = content.match(/^(VStack|HStack|ZStack)\s*\(([^)]*)\)/);
-        if (stackParamsMatch) {
-            const params = stackParamsMatch[2];
-            const alignmentMatch = params.match(/alignment:\s*\.(\w+)/);
-            const spacingMatch = params.match(/spacing:\s*([\d.]+)/);
-            if (alignmentMatch) stackProps.alignment = alignmentMatch[1];
-            if (spacingMatch) stackProps.spacing = parseFloat(spacingMatch[1]);
-        }
-        
-        let afterStack = content.substring(i);
-        
-        while (afterStack.trim().startsWith('.')) {
-            const modMatch = afterStack.trim().match(/^\.(\w+)\(([^)]*)\)/);
-            if (modMatch) {
-                const modName = modMatch[1];
-                const modArgs = modMatch[2];
-                const args: Record<string, any> = {};
-                
-                if (modName === 'padding' && modArgs) {
-                    const num = parseFloat(modArgs);
-                    if (!isNaN(num)) args.all = num;
-                    else if (!modArgs) args.all = 16; // Default padding
-                } else if (modName === 'frame' && modArgs) {
-                    const widthMatch = modArgs.match(/width:\s*(\d+)/);
-                    const heightMatch = modArgs.match(/height:\s*(\d+)/);
-                    if (widthMatch) args.width = parseInt(widthMatch[1]);
-                    if (heightMatch) args.height = parseInt(heightMatch[1]);
-                } else if (modName === 'shadow' && modArgs) {
-                    const radiusMatch = modArgs.match(/radius:\s*([\d.]+)/);
-                    if (radiusMatch) {
-                        args.radius = parseFloat(radiusMatch[1]);
-                    } else if (modArgs === '') {
-                        args.radius = 8;
-                    }
-                } else if (modName === 'cornerRadius' && modArgs) {
-                    const num = parseFloat(modArgs);
-                    if (!isNaN(num)) args.radius = num;
-                } else if (modName === 'opacity' && modArgs) {
-                    const num = parseFloat(modArgs);
-                    if (!isNaN(num)) args.value = num;
-                } else if (modName === 'blur' && modArgs) {
-                    const radiusMatch = modArgs.match(/radius:\s*([\d.]+)/);
-                    if (radiusMatch) args.radius = parseFloat(radiusMatch[1]);
-                } else if (modName === 'background' && modArgs) {
-                    const materialMatch = modArgs.match(/\.(ultraThin|thin|regular)Material/);
-                    const colorMatch = modArgs.match(/Color\.(\w+)/);
-                    if (materialMatch) {
-                        args.material = materialMatch[1];
-                    } else if (colorMatch) {
-                        args.color = colorMatch[1];
-                    }
+    // Parse modifiers on the container itself
+    const stackModifiers: Modifier[] = [];
+    let afterContainer = content.substring(i);
+    
+    while (afterContainer.trim().startsWith('.')) {
+        const modMatch = afterContainer.trim().match(/^\.(\w+)\(([^)]*)\)/);
+        if (modMatch) {
+            const modName = modMatch[1];
+            const modArgs = modMatch[2];
+            const args: Record<string, any> = {};
+            
+            if (modName === 'padding' && modArgs) {
+                const num = parseFloat(modArgs);
+                if (!isNaN(num)) args.all = num;
+                else if (!modArgs) args.all = 16;
+            } else if (modName === 'frame' && modArgs) {
+                const widthMatch = modArgs.match(/width:\s*(\d+)/);
+                const heightMatch = modArgs.match(/height:\s*(\d+)/);
+                if (widthMatch) args.width = parseInt(widthMatch[1]);
+                if (heightMatch) args.height = parseInt(heightMatch[1]);
+            } else if (modName === 'shadow' && modArgs) {
+                const radiusMatch = modArgs.match(/radius:\s*([\d.]+)/);
+                if (radiusMatch) {
+                    args.radius = parseFloat(radiusMatch[1]);
+                } else if (modArgs === '') {
+                    args.radius = 8;
                 }
-                
-                stackModifiers.push({ name: modName, args });
-                afterStack = afterStack.substring(afterStack.indexOf(modMatch[0]) + modMatch[0].length);
-            } else {
-                break;
+            } else if (modName === 'cornerRadius' && modArgs) {
+                const num = parseFloat(modArgs);
+                if (!isNaN(num)) args.radius = num;
+            } else if (modName === 'opacity' && modArgs) {
+                const num = parseFloat(modArgs);
+                if (!isNaN(num)) args.value = num;
+            } else if (modName === 'blur' && modArgs) {
+                const radiusMatch = modArgs.match(/radius:\s*([\d.]+)/);
+                if (radiusMatch) args.radius = parseFloat(radiusMatch[1]);
+            } else if (modName === 'background' && modArgs) {
+                const materialMatch = modArgs.match(/\.(ultraThin|thin|regular)Material/);
+                const colorMatch = modArgs.match(/Color\.(\w+)/);
+                if (materialMatch) {
+                    args.material = materialMatch[1];
+                } else if (colorMatch) {
+                    args.color = colorMatch[1];
+                }
             }
+            
+            stackModifiers.push({ name: modName, args });
+            afterContainer = afterContainer.substring(afterContainer.indexOf(modMatch[0]) + modMatch[0].length);
+        } else {
+            break;
         }
-        
-        return {
-            kind,
-            props: stackProps,
-            modifiers: stackModifiers,
-            children
-        };
     }
     
-    // Match simple Text
-    const textMatch = content.match(/^Text\("([^"]+)"\)/);
-    if (textMatch) {
-        return {
-            kind: 'Text',
-            props: { text: textMatch[1] },
-            modifiers: [],
-            children: []
-        };
+    return {
+        kind,
+        props: stackProps,
+        modifiers: stackModifiers,
+        children
+    };
+}
+
+/**
+ * Parse ForEach with regex
+ */
+function parseRegexForEach(content: string): ViewNode | null {
+    const props: Record<string, any> = {};
+    
+    // Try to extract range: ForEach(1..<4)
+    const rangeMatch = content.match(/ForEach\s*\(\s*(\d+)\s*\.\.<?(\d+)\s*\)/);
+    if (rangeMatch) {
+        const start = parseInt(rangeMatch[1]);
+        const end = parseInt(rangeMatch[2]);
+        props.forEachRange = { start, end: content.includes('..<') ? end : end + 1 };
     }
     
-    return null;
+    // Try to extract array: ForEach(["One", "Two", "Three"]
+    const arrayMatch = content.match(/ForEach\s*\(\s*\[([^\]]+)\]/);
+    if (arrayMatch) {
+        const stringMatches = arrayMatch[1].match(/"([^"]+)"/g);
+        if (stringMatches) {
+            props.forEachItems = stringMatches.map(s => s.replace(/"/g, ''));
+        }
+    }
+    
+    // Try to extract row template (very simple - just Text for now)
+    const closureMatch = content.match(/\{\s*\w+\s+in\s+(.*?)\s*\}/s);
+    if (closureMatch) {
+        const textMatch = closureMatch[1].match(/Text\("([^"]+)"\)/);
+        if (textMatch) {
+            // Parse modifiers on the Text
+            let textNode: ViewNode = {
+                kind: 'Text',
+                props: { text: textMatch[1] },
+                modifiers: [],
+                children: []
+            };
+            
+            // Look for modifiers
+            const modifierText = closureMatch[1].substring(closureMatch[1].indexOf(textMatch[0]) + textMatch[0].length);
+            const paddingMatch = modifierText.match(/\.padding\((\d+)\)/);
+            if (paddingMatch) {
+                textNode.modifiers.push({ name: 'padding', args: { all: parseInt(paddingMatch[1]) } });
+            }
+            
+            props.rowTemplate = textNode;
+        }
+    }
+    
+    return {
+        kind: 'ForEach',
+        props,
+        modifiers: [],
+        children: []
+    };
 }

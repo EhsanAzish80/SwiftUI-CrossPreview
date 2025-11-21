@@ -264,6 +264,27 @@ function renderNode(node: ViewNode): string {
             baseHtml = `<div class="spacer"${style}></div>`;
             break;
             
+        case 'List':
+            baseHtml = `<div class="list"${style}>${node.children.map(renderNode).join('')}</div>`;
+            break;
+            
+        case 'Form':
+            baseHtml = `<div class="form"${style}>${node.children.map(renderNode).join('')}</div>`;
+            break;
+            
+        case 'Section':
+            const headerHtml = node.props.header ? `<div class="section-header">${escapeHtml(node.props.header)}</div>` : '';
+            baseHtml = `<div class="section"${style}>${headerHtml}<div class="section-body">${node.children.map(renderNode).join('')}</div></div>`;
+            break;
+            
+        case 'ScrollView':
+            baseHtml = `<div class="scrollview"${style}>${node.children.map(renderNode).join('')}</div>`;
+            break;
+            
+        case 'ForEach':
+            baseHtml = renderForEach(node);
+            break;
+            
         default:
             baseHtml = `<div class="custom"${style}>${escapeHtml(node.kind)}</div>`;
     }
@@ -280,6 +301,51 @@ function renderNode(node: ViewNode): string {
     }
     
     return baseHtml;
+}
+
+/**
+ * Render a ForEach by expanding its row template
+ */
+function renderForEach(node: ViewNode): string {
+    if (!node.props.rowTemplate) {
+        return '<div class="foreach"></div>';
+    }
+    
+    let iterations = 0;
+    const items: any[] = [];
+    
+    // Determine iteration count from range or array
+    if (node.props.forEachRange) {
+        const { start, end } = node.props.forEachRange;
+        iterations = end - start;
+        for (let i = start; i < end; i++) {
+            items.push(i);
+        }
+    } else if (node.props.forEachItems) {
+        iterations = node.props.forEachItems.length;
+        items.push(...node.props.forEachItems);
+    }
+    
+    // Clone and render the row template for each iteration
+    const rows: string[] = [];
+    for (let i = 0; i < iterations; i++) {
+        const clonedTemplate = cloneViewNode(node.props.rowTemplate);
+        rows.push(renderNode(clonedTemplate));
+    }
+    
+    return `<div class="foreach">${rows.join('')}</div>`;
+}
+
+/**
+ * Deep clone a ViewNode
+ */
+function cloneViewNode(node: ViewNode): ViewNode {
+    return {
+        kind: node.kind,
+        props: { ...node.props },
+        modifiers: node.modifiers ? [...node.modifiers.map(m => ({ ...m, args: { ...m.args } }))] : [],
+        children: node.children ? node.children.map(cloneViewNode) : []
+    };
 }
 
 function escapeHtml(str: string): string {
