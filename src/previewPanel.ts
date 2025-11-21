@@ -18,6 +18,7 @@ export function createPreviewPanel(context: vscode.ExtensionContext): vscode.Web
         vscode.ViewColumn.Two,
         {
             enableScripts: true,
+            retainContextWhenHidden: true,
             localResourceRoots: [
                 vscode.Uri.joinPath(context.extensionUri, 'media')
             ]
@@ -28,6 +29,19 @@ export function createPreviewPanel(context: vscode.ExtensionContext): vscode.Web
 
     // Set HTML content
     panel.webview.html = getHtmlContent(context, panel.webview);
+
+    // Handle messages from the webview
+    panel.webview.onDidReceiveMessage(
+        message => {
+            switch (message.type) {
+                case 'ready':
+                    console.log('Webview is ready');
+                    break;
+            }
+        },
+        undefined,
+        context.subscriptions
+    );
 
     // Handle disposal
     panel.onDidDispose(() => {

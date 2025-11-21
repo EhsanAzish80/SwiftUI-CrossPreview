@@ -2,7 +2,7 @@
   "name": "swiftui-crosspreview",
   "displayName": "SwiftUI CrossPreview",
   "version": "0.1.0",
-  "description": "A cross-platform SwiftUI-style preview engine for VS Code. Parses SwiftUI with tree-sitter, builds a layout tree, and renders it in a webview using HTML/CSS. No Mac, no Xcode, fully local. An open, extensible approach to bringing SwiftUI previews to any OS.",
+  "description": "Cross-platform SwiftUI-style preview for VS Code. Parses SwiftUI and renders an approximate layout in a webview using HTML/CSS, with no Xcode or macOS dependency.",
   "publisher": "swiftui-crosspreview",
   "engines": {
     "vscode": "^1.75.0"
@@ -11,12 +11,15 @@
     "Programming Languages",
     "Visualization"
   ],
+  "activationEvents": [
+    "onCommand:swiftuiPreview.open"
+  ],
   "main": "./dist/extension.js",
   "contributes": {
     "commands": [
       {
         "command": "swiftuiPreview.open",
-        "title": "Open SwiftUI CrossPreview"
+        "title": "SwiftUI CrossPreview: Open Preview"
       }
     ]
   },

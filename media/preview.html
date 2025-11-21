@@ -17,11 +17,7 @@
         h1 {
             color: #ffffff;
             margin-bottom: 10px;
-        }
-        
-        h2 {
-            color: #4fc3f7;
-            margin-top: 0;
+            font-size: 18px;
         }
         
         #root {
@@ -31,25 +27,59 @@
             min-height: 300px;
         }
         
-        .preview-container {
-            margin-top: 20px;
+        /* SwiftUI layout styles */
+        .vstack {
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            gap: 8px;
         }
         
-        .view-tree-json {
-            background-color: #1e1e1e;
-            border: 1px solid #3e3e42;
+        .hstack {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .zstack {
+            position: relative;
+            display: grid;
+            place-items: center;
+        }
+        
+        .zstack > * {
+            grid-area: 1 / 1;
+        }
+        
+        .text {
+            color: #d4d4d4;
+        }
+        
+        .image-placeholder {
+            background-color: #3e3e42;
+            padding: 20px;
             border-radius: 4px;
-            padding: 15px;
-            overflow-x: auto;
-            font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
-            font-size: 13px;
-            line-height: 1.6;
-            color: #d7ba7d;
+            text-align: center;
+            color: #808080;
+            font-style: italic;
+        }
+        
+        .spacer {
+            flex: 1;
         }
         
         .status {
             color: #808080;
             font-style: italic;
+            margin-top: 10px;
+        }
+        
+        .error {
+            color: #f48771;
+            padding: 15px;
+            background-color: #3e2723;
+            border-radius: 4px;
             margin-top: 10px;
         }
     </style>
@@ -71,19 +101,161 @@
                 
                 if (message.type === 'render' && message.root) {
                     renderViewTree(message.root);
+                } else if (message.type === 'error') {
+                    showError(message.message);
                 }
             });
             
             function renderViewTree(root) {
-                // Use the renderToHtml function logic
-                const jsonStr = JSON.stringify(root, null, 2);
+                try {
+                    const html = renderToHtml(root);
+                    rootElement.innerHTML = html;
+                } catch (error) {
+                    showError('Failed to render view tree: ' + error.message);
+                }
+            }
+            
+            function renderToHtml(node) {
+                const modifierStyles = getModifierStyles(node.modifiers || []);
+                const modifierClasses = getModifierClasses(node.modifiers || []);
                 
-                rootElement.innerHTML = `
-                    <div class="preview-container">
-                        <h2>SwiftUI View Tree</h2>
-                        <pre class="view-tree-json">${escapeHtml(jsonStr)}</pre>
-                    </div>
-                `;
+                let html = '';
+                
+                switch (node.kind) {
+                    case 'VStack':
+                        html = `<div class="vstack ${modifierClasses}" style="${modifierStyles}">`;
+                        html += (node.children || []).map(child => renderToHtml(child)).join('');
+                        html += '</div>';
+                        break;
+                        
+                    case 'HStack':
+                        html = `<div class="hstack ${modifierClasses}" style="${modifierStyles}">`;
+                        html += (node.children || []).map(child => renderToHtml(child)).join('');
+                        html += '</div>';
+                        break;
+                        
+                    case 'ZStack':
+                        html = `<div class="zstack ${modifierClasses}" style="${modifierStyles}">`;
+                        html += (node.children || []).map(child => renderToHtml(child)).join('');
+                        html += '</div>';
+                        break;
+                        
+                    case 'Text':
+                        const text = node.props.text || '';
+                        html = `<div class="text ${modifierClasses}" style="${modifierStyles}">${escapeHtml(text)}</div>`;
+                        break;
+                        
+                    case 'Image':
+                        const imageName = node.props.systemName || node.props.name || 'image';
+                        html = `<div class="image-placeholder ${modifierClasses}" style="${modifierStyles}">${escapeHtml(imageName)}</div>`;
+                        break;
+                        
+                    case 'Spacer':
+                        html = `<div class="spacer ${modifierClasses}" style="${modifierStyles}"></div>`;
+                        break;
+                        
+                    default:
+                        html = `<div class="custom ${modifierClasses}" style="${modifierStyles}">Custom View</div>`;
+                }
+                
+                return html;
+            }
+            
+            function getModifierStyles(modifiers) {
+                const styles = [];
+                
+                for (const mod of modifiers) {
+                    switch (mod.name) {
+                        case 'padding':
+                            const padding = mod.args.value || 16;
+                            styles.push(`padding: ${padding}px`);
+                            break;
+                            
+                        case 'foregroundColor':
+                            const fgColor = mod.args.color || 'black';
+                            styles.push(`color: ${mapSwiftUIColor(fgColor)}`);
+                            break;
+                            
+                        case 'background':
+                            const bgColor = mod.args.color || 'transparent';
+                            styles.push(`background-color: ${mapSwiftUIColor(bgColor)}`);
+                            break;
+                            
+                        case 'font':
+                            const fontStyle = mod.args.style || 'body';
+                            styles.push(mapFontStyle(fontStyle));
+                            break;
+                            
+                        case 'frame':
+                            if (mod.args.width) {
+                                styles.push(`width: ${mod.args.width}px`);
+                            }
+                            if (mod.args.height) {
+                                styles.push(`height: ${mod.args.height}px`);
+                            }
+                            break;
+                            
+                        case 'cornerRadius':
+                            const radius = mod.args.radius || 0;
+                            styles.push(`border-radius: ${radius}px`);
+                            break;
+                    }
+                }
+                
+                return styles.join('; ');
+            }
+            
+            function getModifierClasses(modifiers) {
+                const classes = [];
+                
+                for (const mod of modifiers) {
+                    if (mod.name === 'padding') {
+                        classes.push('has-padding');
+                    }
+                }
+                
+                return classes.join(' ');
+            }
+            
+            function mapSwiftUIColor(color) {
+                const colorMap = {
+                    'red': '#FF3B30',
+                    'orange': '#FF9500',
+                    'yellow': '#FFCC00',
+                    'green': '#34C759',
+                    'mint': '#00C7BE',
+                    'teal': '#30B0C7',
+                    'cyan': '#32ADE6',
+                    'blue': '#007AFF',
+                    'indigo': '#5856D6',
+                    'purple': '#AF52DE',
+                    'pink': '#FF2D55',
+                    'brown': '#A2845E',
+                    'white': '#FFFFFF',
+                    'gray': '#8E8E93',
+                    'black': '#000000',
+                    'clear': 'transparent'
+                };
+                
+                return colorMap[color.toLowerCase()] || color;
+            }
+            
+            function mapFontStyle(style) {
+                const fontMap = {
+                    'largeTitle': 'font-size: 34px; font-weight: 400',
+                    'title': 'font-size: 28px; font-weight: 400',
+                    'title2': 'font-size: 22px; font-weight: 400',
+                    'title3': 'font-size: 20px; font-weight: 400',
+                    'headline': 'font-size: 17px; font-weight: 600',
+                    'body': 'font-size: 17px; font-weight: 400',
+                    'callout': 'font-size: 16px; font-weight: 400',
+                    'subheadline': 'font-size: 15px; font-weight: 400',
+                    'footnote': 'font-size: 13px; font-weight: 400',
+                    'caption': 'font-size: 12px; font-weight: 400',
+                    'caption2': 'font-size: 11px; font-weight: 400'
+                };
+                
+                return fontMap[style] || 'font-size: 17px; font-weight: 400';
             }
             
             function escapeHtml(unsafe) {
@@ -95,50 +267,12 @@
                     .replace(/'/g, "&#039;");
             }
             
+            function showError(message) {
+                rootElement.innerHTML = `<div class="error">Error: ${escapeHtml(message)}</div>`;
+            }
+            
             // Send ready message to extension
             vscode.postMessage({ type: 'ready' });
-            
-            // Example: Test with sample data (can be removed later)
-            setTimeout(() => {
-                const sampleTree = {
-                    kind: "VStack",
-                    props: { spacing: 10 },
-                    modifiers: [
-                        { name: "padding", args: { value: 20 } }
-                    ],
-                    children: [
-                        {
-                            kind: "Text",
-                            props: { content: "Hello, SwiftUI!" },
-                            modifiers: [
-                                { name: "font", args: { style: "title" } }
-                            ],
-                            children: []
-                        },
-                        {
-                            kind: "HStack",
-                            props: {},
-                            modifiers: [],
-                            children: [
-                                {
-                                    kind: "Image",
-                                    props: { systemName: "star.fill" },
-                                    modifiers: [],
-                                    children: []
-                                },
-                                {
-                                    kind: "Text",
-                                    props: { content: "Featured" },
-                                    modifiers: [],
-                                    children: []
-                                }
-                            ]
-                        }
-                    ]
-                };
-                
-                renderViewTree(sampleTree);
-            }, 500);
         })();
     </script>
 </body>
