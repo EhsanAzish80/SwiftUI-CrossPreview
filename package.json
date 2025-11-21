@@ -11,9 +11,6 @@
     "Programming Languages",
     "Visualization"
   ],
-  "activationEvents": [
-    "onCommand:swiftuiPreview.open"
-  ],
   "main": "./dist/extension.js",
   "contributes": {
     "commands": [
