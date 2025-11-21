@@ -12,6 +12,9 @@
     "Visualization"
   ],
   "main": "./dist/extension.js",
+  "activationEvents": [
+    "onCommand:swiftuiPreview.open"
+  ],
   "contributes": {
     "commands": [
       {
