@@ -622,6 +622,76 @@ function renderNode(node: ViewNode): string {
             baseHtml = `<div class="geometry-reader"${style}>${node.children.map(renderNode).join('')}</div>`;
             break;
             
+        case 'NavigationView':
+        case 'NavigationStack':
+            const navTitle = node.props.title || '';
+            const navContent = node.children.map(renderNode).join('');
+            baseHtml = `<div class="navigation-view"${style}>
+                ${navTitle ? `<div class="navigation-bar"><div class="nav-title">${escapeHtml(navTitle)}</div></div>` : ''}
+                <div class="navigation-content">${navContent}</div>
+            </div>`;
+            break;
+            
+        case 'NavigationLink':
+            const linkLabel = node.props.label || 'Link';
+            const navLinkDest = node.props.destination || '';
+            baseHtml = `<div class="navigation-link"${style}>
+                <div class="nav-link-label">${escapeHtml(linkLabel)}</div>
+                <div class="nav-link-chevron">›</div>
+            </div>`;
+            break;
+            
+        case 'NavigationSplitView':
+            const sidebarContent = node.props.sidebar ? renderNode(node.props.sidebar) : '';
+            const detailContent = node.props.detail ? renderNode(node.props.detail) : '';
+            baseHtml = `<div class="navigation-split-view"${style}>
+                <div class="nav-sidebar">${sidebarContent}</div>
+                <div class="nav-detail">${detailContent}</div>
+            </div>`;
+            break;
+            
+        case 'TabView':
+            const tabs = node.children.map((child, idx) => {
+                const tabLabel = child.props.tabLabel || `Tab ${idx + 1}`;
+                const badgeValue = child.props.badgeValue || '';
+                return `<div class="tab-content" data-tab="${idx}">${renderNode(child)}</div>`;
+            }).join('');
+            const tabItems = node.children.map((child, idx) => {
+                const tabLabel = child.props.tabLabel || `Tab ${idx + 1}`;
+                const badgeValue = child.props.badgeValue || '';
+                return `<div class="tab-item ${idx === 0 ? 'active' : ''}" data-tab="${idx}">
+                    ${escapeHtml(tabLabel)}
+                    ${badgeValue ? `<span class="tab-badge">${escapeHtml(String(badgeValue))}</span>` : ''}
+                </div>`;
+            }).join('');
+            baseHtml = `<div class="tab-view"${style}>
+                <div class="tab-contents">${tabs}</div>
+                <div class="tab-bar">${tabItems}</div>
+            </div>`;
+            break;
+            
+        case 'AsyncImage':
+            const imageUrl = node.props.url || '';
+            baseHtml = `<div class="async-image"${style}>
+                <img src="${escapeHtml(imageUrl)}" alt="Async Image" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
+                <div class="image-placeholder" style="display:none;">📷</div>
+            </div>`;
+            break;
+            
+        case 'TextEditor':
+            const editorText = node.props.text || '';
+            baseHtml = `<textarea class="text-editor"${style} placeholder="Enter text...">${escapeHtml(editorText)}</textarea>`;
+            break;
+            
+        case 'DisclosureGroup':
+            const disclosureLabel = node.props.label || 'Disclosure';
+            const disclosureContent = node.children.map(renderNode).join('');
+            baseHtml = `<details class="disclosure-group"${style}>
+                <summary class="disclosure-label">${escapeHtml(disclosureLabel)}</summary>
+                <div class="disclosure-content">${disclosureContent}</div>
+            </details>`;
+            break;
+            
         default:
             baseHtml = `<div class="custom"${style}>${escapeHtml(node.kind)}</div>`;
     }
@@ -643,6 +713,24 @@ function renderNode(node: ViewNode): string {
         return `<div style="position: relative; display: inline-block;">
             ${baseHtml}
             <div class="animation-badge" title="Animated">🎬</div>
+        </div>`;
+    }
+    
+    // Add state property badges if present
+    if (node.stateProperties && node.stateProperties.length > 0) {
+        const badges = node.stateProperties.map(prop => {
+            const icon = prop.type === 'State' ? '📦' : 
+                        prop.type === 'Binding' ? '🔗' : 
+                        prop.type === 'StateObject' ? '🎯' :
+                        prop.type === 'ObservedObject' ? '👁️' :
+                        prop.type === 'EnvironmentObject' ? '🌍' : '⚙️';
+            const title = `@${prop.type} ${prop.name}${prop.valueType ? ': ' + prop.valueType : ''}${prop.initialValue !== undefined ? ' = ' + prop.initialValue : ''}`;
+            return `<div class="state-badge" title="${escapeHtml(title)}">${icon}</div>`;
+        }).join('');
+        
+        return `<div style="position: relative;">
+            ${baseHtml}
+            <div class="state-badges">${badges}</div>
         </div>`;
     }
     

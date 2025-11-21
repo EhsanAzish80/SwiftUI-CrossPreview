@@ -14,9 +14,27 @@ renderer/**/*.ts
 examples/**
 test/**
 tests/**
+
+# Exclude development documentation
 DEVELOPMENT.md
 IMPLEMENTATION.md
+IMPLEMENTATION_v1.3.0.md
 NEW_MODIFIERS.md
+FEATURES_v1.1.0.md
+FEATURES_v1.2.0.md
+FEATURES_v1.3.0.md
+RELEASE_v1.0.0.md
+MARKETPLACE.md
+
+# Include essential files for users
+!README.md
+!CHANGELOG.md
+!LICENSE
+!media/icon.png
+!media/preview.html
+!media/preview.css
+
+# Exclude git
 .git/**
 .github/**
 package-lock.json

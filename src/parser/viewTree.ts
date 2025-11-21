@@ -1,4 +1,14 @@
 /**
+ * Represents a SwiftUI property wrapper (e.g., @State, @Binding)
+ */
+export interface StateProperty {
+    name: string;
+    type: "State" | "Binding" | "StateObject" | "ObservedObject" | "EnvironmentObject" | "Environment";
+    valueType?: string;
+    initialValue?: any;
+}
+
+/**
  * Represents a modifier applied to a SwiftUI view
  */
 export interface Modifier {
@@ -10,10 +20,11 @@ export interface Modifier {
  * Represents a node in the SwiftUI view tree
  */
 export interface ViewNode {
-    kind: "VStack" | "HStack" | "ZStack" | "Text" | "Image" | "Spacer" | "List" | "Form" | "Section" | "ForEach" | "ScrollView" | "Button" | "Toggle" | "Picker" | "LinearGradient" | "RadialGradient" | "TextField" | "SecureField" | "Rectangle" | "Circle" | "RoundedRectangle" | "Capsule" | "Ellipse" | "Divider" | "Label" | "Slider" | "Stepper" | "DatePicker" | "ColorPicker" | "ProgressView" | "Link" | "Menu" | "LazyVStack" | "LazyHStack" | "LazyVGrid" | "LazyHGrid" | "Grid" | "Group" | "GeometryReader" | "Custom";
+    kind: "VStack" | "HStack" | "ZStack" | "Text" | "Image" | "Spacer" | "List" | "Form" | "Section" | "ForEach" | "ScrollView" | "Button" | "Toggle" | "Picker" | "LinearGradient" | "RadialGradient" | "TextField" | "SecureField" | "Rectangle" | "Circle" | "RoundedRectangle" | "Capsule" | "Ellipse" | "Divider" | "Label" | "Slider" | "Stepper" | "DatePicker" | "ColorPicker" | "ProgressView" | "Link" | "Menu" | "LazyVStack" | "LazyHStack" | "LazyVGrid" | "LazyHGrid" | "Grid" | "Group" | "GeometryReader" | "NavigationView" | "NavigationStack" | "NavigationLink" | "NavigationSplitView" | "TabView" | "AsyncImage" | "TextEditor" | "DisclosureGroup" | "Custom";
     props: Record<string, any>;
     modifiers: Modifier[];
     children: ViewNode[];
+    stateProperties?: StateProperty[];
 }
 
 /**

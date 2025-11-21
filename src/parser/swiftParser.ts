@@ -105,6 +105,12 @@ function parseWithTreeSitter(source: string): ParseResult {
             return { root: null, errors };
         }
 
+        // Extract state properties from the struct
+        const stateProperties = extractStateProperties(viewStruct);
+        if (stateProperties.length > 0) {
+            viewNode.stateProperties = stateProperties;
+        }
+
         return { root: viewNode, errors };
     } catch (error) {
         const errorMsg = error instanceof Error ? error.message : String(error);
@@ -112,6 +118,86 @@ function parseWithTreeSitter(source: string): ParseResult {
         console.error('Failed to parse Swift code:', error);
         return { root: null, errors };
     }
+}
+
+/**
+ * Extract @State, @Binding, and other property wrappers from a View struct
+ */
+function extractStateProperties(structNode: any): Array<{name: string, type: string, valueType?: string, initialValue?: any}> {
+    const properties: Array<{name: string, type: string, valueType?: string, initialValue?: any}> = [];
+    
+    for (const child of structNode.children) {
+        if (child.type === 'property_declaration' || child.type === 'variable_declaration') {
+            // Look for modifiers (attributes) like @State, @Binding
+            const modifiers = child.children.filter(c => c.type === 'modifiers' || c.type === 'attribute');
+            let propertyWrapperType: string | null = null;
+            
+            for (const modifier of modifiers) {
+                const text = modifier.text;
+                if (text.includes('@State')) propertyWrapperType = 'State';
+                else if (text.includes('@Binding')) propertyWrapperType = 'Binding';
+                else if (text.includes('@StateObject')) propertyWrapperType = 'StateObject';
+                else if (text.includes('@ObservedObject')) propertyWrapperType = 'ObservedObject';
+                else if (text.includes('@EnvironmentObject')) propertyWrapperType = 'EnvironmentObject';
+                else if (text.includes('@Environment')) propertyWrapperType = 'Environment';
+            }
+            
+            if (propertyWrapperType) {
+                // Extract property name
+                const patternNode = child.children.find(c => c.type === 'pattern' || c.type === 'simple_identifier');
+                const nameNode = patternNode?.children?.find(c => c.type === 'simple_identifier') || patternNode;
+                const propertyName = nameNode?.text || 'unknown';
+                
+                // Extract type annotation if present
+                const typeAnnotation = child.children.find(c => c.type === 'type_annotation');
+                let valueType: string | undefined;
+                if (typeAnnotation) {
+                    const typeNode = typeAnnotation.children.find(c => c.type !== ':');
+                    valueType = typeNode?.text;
+                }
+                
+                // Extract initial value if present
+                let initialValue: any;
+                const equalityNode = child.children.find(c => c.type === 'equal_sign' || c.text === '=');
+                if (equalityNode) {
+                    const valueIndex = child.children.indexOf(equalityNode) + 1;
+                    if (valueIndex < child.children.length) {
+                        const valueNode = child.children[valueIndex];
+                        initialValue = extractInitialValue(valueNode);
+                    }
+                }
+                
+                properties.push({
+                    name: propertyName,
+                    type: propertyWrapperType,
+                    valueType,
+                    initialValue
+                });
+            }
+        }
+    }
+    
+    return properties;
+}
+
+/**
+ * Extract initial value from a node
+ */
+function extractInitialValue(node: any): any {
+    if (node.type === 'boolean_literal') {
+        return node.text === 'true';
+    }
+    if (node.type === 'integer_literal') {
+        return parseInt(node.text);
+    }
+    if (node.type === 'float_literal') {
+        return parseFloat(node.text);
+    }
+    if (node.type === 'string_literal') {
+        const match = node.text.match(/"([^"]*)"/);
+        return match ? match[1] : node.text;
+    }
+    return node.text;
 }
 
 /**
@@ -503,6 +589,41 @@ function parseCallExpression(node: any, source: string): ViewNode | null {
     // Handle GeometryReader
     if (functionName === 'GeometryReader') {
         return parseContainerView(node, 'GeometryReader', source);
+    }
+
+    // Handle NavigationView
+    if (functionName === 'NavigationView') {
+        return parseNavigationView(node, source);
+    }
+
+    // Handle NavigationStack
+    if (functionName === 'NavigationStack') {
+        return parseNavigationStack(node, source);
+    }
+
+    // Handle NavigationLink
+    if (functionName === 'NavigationLink') {
+        return parseNavigationLink(node, source);
+    }
+
+    // Handle TabView
+    if (functionName === 'TabView') {
+        return parseTabView(node, source);
+    }
+
+    // Handle AsyncImage
+    if (functionName === 'AsyncImage') {
+        return parseAsyncImage(node, source);
+    }
+
+    // Handle TextEditor
+    if (functionName === 'TextEditor') {
+        return parseTextEditor(node, source);
+    }
+
+    // Handle DisclosureGroup
+    if (functionName === 'DisclosureGroup') {
+        return parseDisclosureGroup(node, source);
     }
 
     return null;
@@ -1208,6 +1329,234 @@ function parseMenu(node: any, source: string): ViewNode {
 }
 
 /**
+ * Parse NavigationView
+ */
+function parseNavigationView(node: any, source: string): ViewNode {
+    const children: ViewNode[] = [];
+    const args = node.children.find(c => c.type === 'call_suffix');
+    
+    if (args) {
+        for (const arg of args.children) {
+            if (arg.type === 'lambda_literal' || arg.type === 'closure_expression') {
+                const statements = findStatementsInClosure(arg);
+                for (const stmt of statements) {
+                    const child = parseViewExpression(stmt, source);
+                    if (child) {
+                        children.push(child);
+                    }
+                }
+            }
+        }
+    }
+    
+    return {
+        kind: 'NavigationView',
+        props: {},
+        modifiers: [],
+        children
+    };
+}
+
+/**
+ * Parse NavigationStack (iOS 16+)
+ */
+function parseNavigationStack(node: any, source: string): ViewNode {
+    const children: ViewNode[] = [];
+    const args = node.children.find(c => c.type === 'call_suffix');
+    
+    if (args) {
+        for (const arg of args.children) {
+            if (arg.type === 'lambda_literal' || arg.type === 'closure_expression') {
+                const statements = findStatementsInClosure(arg);
+                for (const stmt of statements) {
+                    const child = parseViewExpression(stmt, source);
+                    if (child) {
+                        children.push(child);
+                    }
+                }
+            }
+        }
+    }
+    
+    return {
+        kind: 'NavigationStack',
+        props: {},
+        modifiers: [],
+        children
+    };
+}
+
+/**
+ * Parse NavigationLink
+ */
+function parseNavigationLink(node: any, source: string): ViewNode {
+    const props: Record<string, any> = {
+        label: 'Link',
+        destination: null
+    };
+    const children: ViewNode[] = [];
+    
+    const args = node.children.find((c: any) => c.type === 'call_suffix');
+    if (args) {
+        const valueArgs = args.children.filter((c: any) => c.type === 'value_argument');
+        
+        // First argument is usually the label (string or view)
+        if (valueArgs.length > 0) {
+            const firstArg = valueArgs[0];
+            const stringLiteral = firstArg.children.find((c: any) => 
+                c.type === 'line_string_literal' || c.type === 'string_literal'
+            );
+            if (stringLiteral) {
+                props.label = stringLiteral.text.replace(/^"/, '').replace(/"$/, '');
+            }
+        }
+        
+        // Parse closure for label and destination
+        for (const arg of args.children) {
+            if (arg.type === 'lambda_literal' || arg.type === 'closure_expression') {
+                const statements = findStatementsInClosure(arg);
+                for (const stmt of statements) {
+                    const child = parseViewExpression(stmt, source);
+                    if (child) {
+                        // First closure child is typically the destination
+                        if (!props.destination) {
+                            props.destination = child;
+                        } else {
+                            children.push(child);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    return {
+        kind: 'NavigationLink',
+        props,
+        modifiers: [],
+        children
+    };
+}
+
+/**
+ * Parse TabView
+ */
+function parseTabView(node: any, source: string): ViewNode {
+    const children: ViewNode[] = [];
+    const args = node.children.find(c => c.type === 'call_suffix');
+    
+    if (args) {
+        for (const arg of args.children) {
+            if (arg.type === 'lambda_literal' || arg.type === 'closure_expression') {
+                const statements = findStatementsInClosure(arg);
+                for (const stmt of statements) {
+                    const child = parseViewExpression(stmt, source);
+                    if (child) {
+                        children.push(child);
+                    }
+                }
+            }
+        }
+    }
+    
+    return {
+        kind: 'TabView',
+        props: { selectedTab: 0 },
+        modifiers: [],
+        children
+    };
+}
+
+/**
+ * Parse AsyncImage
+ */
+function parseAsyncImage(node: any, source: string): ViewNode {
+    const props: Record<string, any> = {
+        url: '',
+        placeholder: null
+    };
+    
+    const args = node.children.find((c: any) => c.type === 'call_suffix');
+    if (args) {
+        // Try to extract URL from arguments
+        const urlMatch = node.text.match(/url:\s*URL\(string:\s*"([^"]+)"\)/);
+        if (urlMatch) {
+            props.url = urlMatch[1];
+        }
+    }
+    
+    return {
+        kind: 'AsyncImage',
+        props,
+        modifiers: [],
+        children: []
+    };
+}
+
+/**
+ * Parse TextEditor
+ */
+function parseTextEditor(node: any, source: string): ViewNode {
+    const props: Record<string, any> = {
+        text: 'Text content...'
+    };
+    
+    return {
+        kind: 'TextEditor',
+        props,
+        modifiers: [],
+        children: []
+    };
+}
+
+/**
+ * Parse DisclosureGroup
+ */
+function parseDisclosureGroup(node: any, source: string): ViewNode {
+    const props: Record<string, any> = {
+        label: 'Disclosure',
+        isExpanded: false
+    };
+    const children: ViewNode[] = [];
+    
+    const args = node.children.find((c: any) => c.type === 'call_suffix');
+    if (args) {
+        const valueArgs = args.children.filter((c: any) => c.type === 'value_argument');
+        
+        // First argument is usually the label
+        if (valueArgs.length > 0) {
+            const firstArg = valueArgs[0];
+            const stringLiteral = firstArg.children.find((c: any) => 
+                c.type === 'line_string_literal' || c.type === 'string_literal'
+            );
+            if (stringLiteral) {
+                props.label = stringLiteral.text.replace(/^"/, '').replace(/"$/, '');
+            }
+        }
+        
+        // Parse content closure
+        for (const arg of args.children) {
+            if (arg.type === 'lambda_literal' || arg.type === 'closure_expression') {
+                const statements = findStatementsInClosure(arg);
+                for (const stmt of statements) {
+                    const child = parseViewExpression(stmt, source);
+                    if (child) {
+                        children.push(child);
+                    }
+                }
+            }
+        }
+    }
+    
+    return {
+        kind: 'DisclosureGroup',
+        props,
+        modifiers: [],
+        children
+    };
+}
+
+/**
  * Parse postfix expression (handles modifiers like .padding())
  */
 function parsePostfixExpression(node: any, source: string): ViewNode | null {
@@ -1481,6 +1830,47 @@ function parseModifierArgument(node: any, args: Record<string, any>, modifierNam
         } else if (modifierName === 'accessibilityLabel' || modifierName === 'accessibilityHint' || modifierName === 'accessibilityValue') {
             const stringMatch = node.text.match(/"([^"]+)"/);
             if (stringMatch) args.text = stringMatch[1];
+        } else if (modifierName === 'navigationTitle') {
+            const stringMatch = node.text.match(/"([^"]+)"/);
+            if (stringMatch) args.title = stringMatch[1];
+        } else if (modifierName === 'navigationBarTitleDisplayMode') {
+            const modeMatch = node.text.match(/\.(\w+)/);
+            if (modeMatch) args.displayMode = modeMatch[1];
+        } else if (modifierName === 'toolbar') {
+            args.hasToolbar = true;
+        } else if (modifierName === 'toolbarBackground') {
+            const colorName = extractEnumValue(node);
+            if (colorName) args.color = colorName;
+        } else if (modifierName === 'navigationBarBackButtonHidden') {
+            const boolMatch = node.text.match(/(true|false)/);
+            if (boolMatch) args.hidden = boolMatch[1] === 'true';
+            else args.hidden = true;
+        } else if (modifierName === 'tabItem') {
+            args.hasTabItem = true;
+        } else if (modifierName === 'badge') {
+            const valueMatch = node.text.match(/(\d+)|"([^"]+)"/);
+            if (valueMatch) {
+                args.badgeValue = valueMatch[1] || valueMatch[2];
+            }
+        } else if (modifierName === 'id') {
+            const stringMatch = node.text.match(/"([^"]+)"/);
+            const numberMatch = node.text.match(/(\d+)/);
+            if (stringMatch) args.id = stringMatch[1];
+            else if (numberMatch) args.id = numberMatch[1];
+        } else if (modifierName === 'searchable') {
+            args.isSearchable = true;
+        } else if (modifierName === 'refreshable') {
+            args.isRefreshable = true;
+        } else if (modifierName === 'swipeActions') {
+            args.hasSwipeActions = true;
+        } else if (modifierName === 'contextMenu') {
+            args.hasContextMenu = true;
+        } else if (modifierName === 'sheet' || modifierName === 'fullScreenCover') {
+            args.isPresented = true;
+        } else if (modifierName === 'alert') {
+            args.isPresented = true;
+            const titleMatch = node.text.match(/title:\s*"([^"]+)"/);
+            if (titleMatch) args.title = titleMatch[1];
         } else {
             // Try to extract from the whole expression
             const colorName = extractEnumValue(node);

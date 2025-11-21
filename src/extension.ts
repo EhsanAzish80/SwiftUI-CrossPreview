@@ -883,6 +883,229 @@ function getPreviewHtml(webview: vscode.Webview, context: vscode.ExtensionContex
           height: 100%;
         }
         
+        .navigation-view, .navigation-stack {
+          display: flex;
+          flex-direction: column;
+          width: 100%;
+          background: #f2f2f7;
+          border-radius: 12px;
+          overflow: hidden;
+        }
+        
+        .navigation-bar {
+          background: #ffffff;
+          border-bottom: 1px solid #e5e5ea;
+          padding: 12px 16px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        
+        .nav-title {
+          font-size: 17px;
+          font-weight: 600;
+          color: #1d1d1f;
+        }
+        
+        .navigation-content {
+          flex: 1;
+          overflow-y: auto;
+          padding: 16px;
+        }
+        
+        .navigation-link {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 12px 16px;
+          background: #ffffff;
+          border-radius: 8px;
+          margin-bottom: 8px;
+          cursor: pointer;
+          transition: background 0.2s;
+        }
+        
+        .navigation-link:hover {
+          background: #f2f2f7;
+        }
+        
+        .nav-link-label {
+          font-size: 15px;
+          color: #1d1d1f;
+        }
+        
+        .nav-link-chevron {
+          font-size: 18px;
+          color: #8e8e93;
+          font-weight: 300;
+        }
+        
+        .navigation-split-view {
+          display: flex;
+          width: 100%;
+          height: 100%;
+          background: #f2f2f7;
+          border-radius: 12px;
+          overflow: hidden;
+        }
+        
+        .nav-sidebar {
+          width: 300px;
+          background: #ffffff;
+          border-right: 1px solid #e5e5ea;
+          overflow-y: auto;
+        }
+        
+        .nav-detail {
+          flex: 1;
+          overflow-y: auto;
+          padding: 16px;
+        }
+        
+        .tab-view {
+          display: flex;
+          flex-direction: column;
+          width: 100%;
+          background: #f2f2f7;
+          border-radius: 12px;
+          overflow: hidden;
+        }
+        
+        .tab-contents {
+          flex: 1;
+          overflow-y: auto;
+          padding: 16px;
+        }
+        
+        .tab-content {
+          display: none;
+        }
+        
+        .tab-content.active {
+          display: block;
+        }
+        
+        .tab-bar {
+          display: flex;
+          background: #ffffff;
+          border-top: 1px solid #e5e5ea;
+          padding: 8px;
+          gap: 4px;
+        }
+        
+        .tab-item {
+          flex: 1;
+          padding: 10px;
+          text-align: center;
+          font-size: 14px;
+          color: #8e8e93;
+          cursor: pointer;
+          border-radius: 8px;
+          transition: all 0.2s;
+          position: relative;
+        }
+        
+        .tab-item.active {
+          color: #007aff;
+          background: #f2f2f7;
+        }
+        
+        .tab-item:hover:not(.active) {
+          background: #f9f9f9;
+        }
+        
+        .tab-badge {
+          position: absolute;
+          top: 4px;
+          right: 8px;
+          background: #ff3b30;
+          color: #ffffff;
+          font-size: 11px;
+          font-weight: 600;
+          padding: 2px 6px;
+          border-radius: 10px;
+          min-width: 18px;
+        }
+        
+        .async-image {
+          position: relative;
+          width: 200px;
+          height: 200px;
+          background: #f2f2f7;
+          border-radius: 8px;
+          overflow: hidden;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        
+        .async-image img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+        
+        .image-placeholder {
+          font-size: 48px;
+          color: #8e8e93;
+        }
+        
+        .text-editor {
+          width: 100%;
+          min-height: 120px;
+          padding: 12px;
+          font-size: 15px;
+          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+          color: #1d1d1f;
+          background: #ffffff;
+          border: 1px solid #d1d1d6;
+          border-radius: 8px;
+          resize: vertical;
+        }
+        
+        .text-editor:focus {
+          outline: none;
+          border-color: #007aff;
+        }
+        
+        .disclosure-group {
+          background: #ffffff;
+          border-radius: 8px;
+          margin-bottom: 8px;
+          border: 1px solid #e5e5ea;
+        }
+        
+        .disclosure-label {
+          padding: 12px 16px;
+          font-size: 15px;
+          font-weight: 500;
+          color: #1d1d1f;
+          cursor: pointer;
+          list-style: none;
+          user-select: none;
+        }
+        
+        .disclosure-label::-webkit-details-marker {
+          display: none;
+        }
+        
+        .disclosure-label::before {
+          content: '›';
+          display: inline-block;
+          margin-right: 8px;
+          transition: transform 0.2s;
+          font-size: 18px;
+          color: #8e8e93;
+        }
+        
+        .disclosure-group[open] .disclosure-label::before {
+          transform: rotate(90deg);
+        }
+        
+        .disclosure-content {
+          padding: 0 16px 12px 36px;
+        }
+        
         .animation-badge {
           position: absolute;
           top: -8px;
@@ -898,6 +1121,29 @@ function getPreviewHtml(webview: vscode.Webview, context: vscode.ExtensionContex
           pointer-events: none;
           z-index: 100;
           box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+        
+        .state-badges {
+          position: absolute;
+          top: 4px;
+          left: 4px;
+          display: flex;
+          gap: 4px;
+          z-index: 100;
+          pointer-events: none;
+        }
+        
+        .state-badge {
+          font-size: 14px;
+          background: rgba(255, 255, 255, 0.95);
+          border: 1px solid rgba(0, 122, 255, 0.3);
+          border-radius: 6px;
+          padding: 2px 6px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+          cursor: help;
         }
         
         #custom-size-controls {
@@ -1254,7 +1500,22 @@ function getPreviewHtml(webview: vscode.Webview, context: vscode.ExtensionContex
                             case 'accessibilityLabel':
                             case 'accessibilityHint':
                             case 'accessibilityValue':
-                                // Accessibility modifiers - no visual effect
+                            case 'navigationTitle':
+                            case 'navigationBarTitleDisplayMode':
+                            case 'toolbar':
+                            case 'toolbarBackground':
+                            case 'navigationBarBackButtonHidden':
+                            case 'tabItem':
+                            case 'badge':
+                            case 'id':
+                            case 'searchable':
+                            case 'refreshable':
+                            case 'swipeActions':
+                            case 'contextMenu':
+                            case 'sheet':
+                            case 'fullScreenCover':
+                            case 'alert':
+                                // These modifiers affect structure, not inline styles
                                 break;
                         }
                     }
@@ -1494,6 +1755,60 @@ function getPreviewHtml(webview: vscode.Webview, context: vscode.ExtensionContex
                         case 'GeometryReader':
                             baseHtml = '<div class="geometry-reader"' + style + '>' + n.children.map(renderNode).join('') + '</div>';
                             break;
+                        case 'NavigationView':
+                        case 'NavigationStack':
+                            var navTitle = n.props.title || '';
+                            var navContent = n.children.map(renderNode).join('');
+                            baseHtml = '<div class="navigation-view"' + style + '>' +
+                                (navTitle ? '<div class="navigation-bar"><div class="nav-title">' + escapeHtml(navTitle) + '</div></div>' : '') +
+                                '<div class="navigation-content">' + navContent + '</div></div>';
+                            break;
+                        case 'NavigationLink':
+                            var linkLabel = n.props.label || 'Link';
+                            baseHtml = '<div class="navigation-link"' + style + '>' +
+                                '<div class="nav-link-label">' + escapeHtml(linkLabel) + '</div>' +
+                                '<div class="nav-link-chevron">›</div></div>';
+                            break;
+                        case 'NavigationSplitView':
+                            var sidebarHtml = n.props.sidebar ? renderNode(n.props.sidebar) : '';
+                            var detailHtml = n.props.detail ? renderNode(n.props.detail) : '';
+                            baseHtml = '<div class="navigation-split-view"' + style + '>' +
+                                '<div class="nav-sidebar">' + sidebarHtml + '</div>' +
+                                '<div class="nav-detail">' + detailHtml + '</div></div>';
+                            break;
+                        case 'TabView':
+                            var tabs = n.children.map(function(child, idx) {
+                                return '<div class="tab-content' + (idx === 0 ? ' active' : '') + '" data-tab="' + idx + '">' + renderNode(child) + '</div>';
+                            }).join('');
+                            var tabItems = n.children.map(function(child, idx) {
+                                var tabLabel = child.props.tabLabel || 'Tab ' + (idx + 1);
+                                var badgeValue = child.props.badgeValue || '';
+                                return '<div class="tab-item' + (idx === 0 ? ' active' : '') + '" data-tab="' + idx + '" onclick="switchTab(' + idx + ')">' +
+                                    escapeHtml(tabLabel) +
+                                    (badgeValue ? '<span class="tab-badge">' + escapeHtml(String(badgeValue)) + '</span>' : '') +
+                                    '</div>';
+                            }).join('');
+                            baseHtml = '<div class="tab-view"' + style + '>' +
+                                '<div class="tab-contents">' + tabs + '</div>' +
+                                '<div class="tab-bar">' + tabItems + '</div></div>';
+                            break;
+                        case 'AsyncImage':
+                            var imageUrl = n.props.url || '';
+                            baseHtml = '<div class="async-image"' + style + '>' +
+                                '<img src="' + escapeHtml(imageUrl) + '" alt="Async Image" onerror="this.style.display=\\'none\\';this.nextElementSibling.style.display=\\'flex\\';" />' +
+                                '<div class="image-placeholder" style="display:none;">📷</div></div>';
+                            break;
+                        case 'TextEditor':
+                            var editorText = n.props.text || '';
+                            baseHtml = '<textarea class="text-editor"' + style + ' placeholder="Enter text...">' + escapeHtml(editorText) + '</textarea>';
+                            break;
+                        case 'DisclosureGroup':
+                            var disclosureLabel = n.props.label || 'Disclosure';
+                            var disclosureContent = n.children.map(renderNode).join('');
+                            baseHtml = '<details class="disclosure-group"' + style + '>' +
+                                '<summary class="disclosure-label">' + escapeHtml(disclosureLabel) + '</summary>' +
+                                '<div class="disclosure-content">' + disclosureContent + '</div></details>';
+                            break;
                         default:
                             baseHtml = '<div class="custom"' + style + '>' + escapeHtml(n.kind) + '</div>';
                     }
@@ -1514,6 +1829,25 @@ function getPreviewHtml(webview: vscode.Webview, context: vscode.ExtensionContex
                         return '<div style="position: relative; display: inline-block;">' +
                             baseHtml +
                             '<div class="animation-badge" title="Animated">🎬</div></div>';
+                    }
+                    
+                    // Add state property badges if present
+                    if (n.stateProperties && n.stateProperties.length > 0) {
+                        var badges = n.stateProperties.map(function(prop) {
+                            var icon = prop.type === 'State' ? '📦' : 
+                                      prop.type === 'Binding' ? '🔗' : 
+                                      prop.type === 'StateObject' ? '🎯' :
+                                      prop.type === 'ObservedObject' ? '👁️' :
+                                      prop.type === 'EnvironmentObject' ? '🌍' : '⚙️';
+                            var title = '@' + prop.type + ' ' + prop.name;
+                            if (prop.valueType) title += ': ' + prop.valueType;
+                            if (prop.initialValue !== undefined) title += ' = ' + prop.initialValue;
+                            return '<div class="state-badge" title="' + escapeHtml(title) + '">' + icon + '</div>';
+                        }).join('');
+                        
+                        return '<div style="position: relative;">' +
+                            baseHtml +
+                            '<div class="state-badges">' + badges + '</div></div>';
                     }
                     
                     return baseHtml;
@@ -1586,6 +1920,34 @@ function getPreviewHtml(webview: vscode.Webview, context: vscode.ExtensionContex
                               .replace(/</g, "&lt;")
                               .replace(/>/g, "&gt;");
                 }
+                
+                function switchTab(tabIndex) {
+                    var tabView = event.target.closest('.tab-view');
+                    if (!tabView) return;
+                    
+                    // Update tab items
+                    var tabItems = tabView.querySelectorAll('.tab-item');
+                    tabItems.forEach(function(item, idx) {
+                        if (idx === tabIndex) {
+                            item.classList.add('active');
+                        } else {
+                            item.classList.remove('active');
+                        }
+                    });
+                    
+                    // Update tab contents
+                    var tabContents = tabView.querySelectorAll('.tab-content');
+                    tabContents.forEach(function(content, idx) {
+                        if (idx === tabIndex) {
+                            content.classList.add('active');
+                        } else {
+                            content.classList.remove('active');
+                        }
+                    });
+                }
+                
+                // Make switchTab available globally
+                window.switchTab = switchTab;
                 
                 return '<div class="root">' + renderNode(node) + '</div>';
             }

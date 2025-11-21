@@ -2,6 +2,56 @@
 
 All notable changes to the SwiftUI CrossPreview extension will be documented in this file.
 
+## [1.3.0] - 2025-01-XX
+
+### Added - Navigation & App Structure
+
+#### State Visualization ⭐ NEW
+- **@State Badge** - Visual indicator for @State properties with 📦 icon
+- **@Binding Badge** - Visual indicator for @Binding properties with 🔗 icon
+- **@StateObject Badge** - Visual indicator for @StateObject properties with 🎯 icon
+- **@ObservedObject Badge** - Visual indicator for @ObservedObject properties with 👁️ icon
+- **@EnvironmentObject Badge** - Visual indicator for @EnvironmentObject properties with 🌍 icon
+- **@Environment Badge** - Visual indicator for @Environment properties with ⚙️ icon
+- **Property Details** - Hover tooltip shows property name, type, and initial value
+
+#### New Navigation Views (4 views)
+- **NavigationView** - Container for navigation-based interfaces with navigation bar
+- **NavigationStack** - iOS 16+ navigation container with stack-based navigation
+- **NavigationLink** - Interactive element for navigating to destination views
+- **NavigationSplitView** - Multi-column navigation interface (sidebar + detail)
+
+#### New App Structure Views (1 view)
+- **TabView** - Tab-based interface with tab bar at bottom
+
+#### New Content Views (3 views)
+- **AsyncImage** - Remote image loader with URL support
+- **TextEditor** - Multi-line text input field (like UITextView)
+- **DisclosureGroup** - Expandable/collapsible content section
+
+#### New Navigation Modifiers (8 modifiers)
+- `.navigationTitle(_:)` - Set title in navigation bar
+- `.navigationBarTitleDisplayMode(_:)` - Control title size (.large, .inline, .automatic)
+- `.toolbar()` - Add toolbar to navigation bar
+- `.toolbarBackground(_:)` - Set toolbar background color
+- `.navigationBarBackButtonHidden(_:)` - Hide back button
+- `.tabItem(_:)` - Configure tab bar item appearance
+- `.badge(_:)` - Display badge on tab or list item
+- `.searchable()` - Make view searchable with search bar
+
+#### New Additional Modifiers (5 modifiers)
+- `.id(_:)` - Assign identifier to view for animations/transitions
+- `.refreshable()` - Add pull-to-refresh functionality
+- `.swipeActions()` - Add swipe gesture actions
+- `.contextMenu()` - Add context menu on long press
+- `.sheet(_:)` / `.fullScreenCover(_:)` - Present modal views
+- `.alert(_:)` - Show alert dialog
+
+### Enhanced
+- Added tab switching interactivity in TabView
+- Improved navigation bar rendering with proper title display
+- Added visual indicators for disclosure group expansion state
+
 ## [1.2.0] - 2025-11-21
 
 ### Added - Major Feature Expansion (60+ new features)

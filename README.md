@@ -1,193 +1,394 @@
 # SwiftUI CrossPreview
 
-**Cross-platform SwiftUI preview engine for VS Code.** Parses SwiftUI with tree-sitter, builds a layout tree, and renders an approximate UI in a webview using HTML/CSS — no Mac, no Xcode required.
+**Live SwiftUI preview for VS Code on any platform.** No Mac, no Xcode, no simulators required.
+
+Preview your SwiftUI code instantly with automatic updates as you type. Built with tree-sitter parser and HTML/CSS renderer.
 
 ---
 
-## Status
+## ✨ Features at a Glance
 
-✅ **Live SwiftUI-style preview with auto-update is now working.**
-
----
-
-## Features
-
-- **Live preview with auto-update** (300ms debounce) — edit your Swift code and see instant changes
-- **AST-based parsing** using tree-sitter-swift with detailed error messages
-- **34 SwiftUI views supported**: Including VStack, HStack, ZStack, LazyVStack, LazyHStack, Grid, List, Form, TextField, Slider, Stepper, DatePicker, ColorPicker, ProgressView, Menu, and more
-- **57+ modifiers supported**: Layout, typography, colors, visual effects, animations, interactions, accessibility, and more
-- **Rich visual effects**: Glass materials, gradients, shadows, blur, brightness, contrast, saturation, hue rotation
-- **Input controls**: TextField, SecureField, Slider, Stepper, DatePicker, ColorPicker with native styling
-- **Stack alignment & spacing**: VStack(alignment: .leading, spacing: 16) with full control
-- **15 SwiftUI colors**: red, blue, green, yellow, purple, pink, orange, mint, teal, cyan, indigo, brown, white, gray, black
-- **11 font styles**: largeTitle, title, title2, title3, headline, body, callout, subheadline, footnote, caption, caption2
-- **Device presets** (Phone/Tablet/Desktop/Custom) with iPhone-style mockup and Dynamic Island
-- **Glass/material backgrounds**: .ultraThinMaterial, .thinMaterial, .regularMaterial with backdrop blur
-- **Accessibility support**: accessibilityLabel, accessibilityHint, accessibilityValue for screen readers
-- **HTML/CSS renderer** with dark VS Code-themed UI, shadows, and modern visual effects
-- **Command**: `SwiftUI CrossPreview: Open Preview`
+🎨 **42 SwiftUI Views** - VStack, HStack, NavigationView, TabView, AsyncImage, and more  
+🔧 **71+ Modifiers** - Layout, navigation, colors, effects, typography, accessibility  
+📱 **Device Mockups** - iPhone, iPad, desktop with Dynamic Island  
+🔄 **Live Updates** - See changes instantly with 300ms debounce  
+🎭 **Visual Effects** - Glass materials, gradients, shadows, blur, animations  
+🧭 **Navigation** - Full NavigationView, NavigationStack, NavigationLink support  
+📑 **Tab Interfaces** - Interactive TabView with badges  
+🌐 **Remote Content** - AsyncImage for loading images from URLs  
+📦 **State Visualization** - @State, @Binding, and property wrapper badges  
+♿ **Accessibility** - Screen reader attributes and labels
 
 ---
 
-## Supported SwiftUI Example
+## 🚀 Quick Start
 
+### Installation
+
+1. Open VS Code
+2. Go to Extensions (Ctrl+Shift+X / Cmd+Shift+X)
+3. Search for "SwiftUI CrossPreview"
+4. Click Install
+
+**Or install from:** [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=ehsanazish.swiftui-crosspreview)
+
+### Usage
+
+1. Open any Swift file with SwiftUI code
+2. Open Command Palette (Ctrl+Shift+P / Cmd+Shift+P)
+3. Run: **`SwiftUI CrossPreview: Open Preview`**
+4. Your SwiftUI code renders instantly in a side panel
+5. Edit your code and watch the preview update live!
+
+---
+
+## 📱 What You Can Preview
+
+### Navigation & App Structure
 ```swift
-import SwiftUI
-
-struct GlassCard: View {
-    var body: some View {
-        VStack(alignment: .leading, spacing: 20) {
-            Text("Welcome")
-                .font(.largeTitle)
-                .foregroundColor(.white)
-            
-            Text("SwiftUI CrossPreview")
-                .font(.headline)
-                .foregroundColor(.blue)
-                .padding(16)
-                .background(.thinMaterial)
-                .cornerRadius(12)
-                .shadow(radius: 8)
-            
-            HStack(alignment: .center, spacing: 12) {
-                Text("Live")
-                    .opacity(0.7)
-                Text("Preview")
-                    .font(.caption)
+TabView {
+    NavigationView {
+        List {
+            NavigationLink("Profile") {
+                ProfileView()
             }
         }
-        .padding(32)
+        .navigationTitle("Home")
     }
+    .tabItem { Label("Home", systemImage: "house") }
+    .badge(3)
 }
 ```
 
-**Supported Views:**
-- **Layouts**: VStack, HStack, ZStack, LazyVStack, LazyHStack, Grid, Group, GeometryReader
-- **Content**: Text, Image, Spacer
-- **Lists**: List, Form, Section, ScrollView, ForEach
-- **Controls**: Button, Toggle, Picker, TextField, SecureField, Slider, Stepper, DatePicker, ColorPicker
-- **Shapes**: Rectangle, Circle, RoundedRectangle, Capsule, Ellipse
-- **Graphics**: LinearGradient, RadialGradient
-- **UI Elements**: Divider, Label, ProgressView, Link, Menu
-
-**Supported Modifiers:**
-- **Layout**: `.padding()`, `.frame(width:height:)`, `.offset(x:y:)`, `.position(x:y:)`, `.aspectRatio(_:contentMode:)`, `.clipped()`
-- **Image Scaling**: `.scaledToFit()`, `.scaledToFill()`
-- **Colors**: `.foregroundColor()`, `.foregroundStyle()`, `.background()`, `.tint()`
-- **Glass**: `.background(.ultraThinMaterial/.thinMaterial/.regularMaterial)`
-- **Typography**: `.font()`, `.bold()`, `.italic()`, `.underline()`, `.strikethrough()`, `.fontWeight()`, `.kerning()`, `.tracking()`, `.baselineOffset()`, `.multilineTextAlignment()`, `.lineLimit()`
-- **Visual**: `.cornerRadius()`, `.shadow()`, `.opacity()`, `.blur()`, `.border()`, `.clipShape()`, `.mask()`
-- **Color Adjust**: `.brightness()`, `.contrast()`, `.saturation()`, `.hueRotation()`
-- **Shapes**: `.fill()`, `.stroke()`
-- **Transform**: `.rotationEffect()`, `.scaleEffect()`, `.offset()`
-- **Animation**: `.animation()`, `.transition()`
-- **Interaction**: `.onTapGesture()`, `.onLongPressGesture()`, `.disabled()`
-- **Lifecycle**: `.onAppear()`, `.onDisappear()`
-- **Accessibility**: `.accessibilityLabel()`, `.accessibilityHint()`, `.accessibilityValue()`
-- **Layering**: `.overlay()`
-
----
-
-## Usage
-
-1. **Open a Swift file** containing a SwiftUI view (e.g., `MyView.swift`)
-2. **Open Command Palette** (Cmd/Ctrl + Shift + P)
-3. Run: **`SwiftUI CrossPreview: Open Preview`**
-4. **Select device**: Click Phone, Tablet, or Desktop in the bottom bar
-5. **Edit your Swift code** — the preview updates automatically!
-6. **Error handling**: If parsing fails, an error banner shows diagnostics
-
----
-
-## Implementation / Architecture
-
-```
-Swift source → tree-sitter parser → ViewNode tree → HTML/CSS renderer → VS Code webview
+### Visual Effects & Materials
+```swift
+VStack {
+    Text("Glass Card")
+        .font(.largeTitle)
+        .foregroundColor(.white)
+}
+.padding(32)
+.background(.ultraThinMaterial)
+.cornerRadius(20)
+.shadow(radius: 12)
 ```
 
-**Key files:**
-- [`src/parser/swiftParser.ts`](src/parser/swiftParser.ts) - Tree-sitter Swift parser with regex fallback
-- [`src/parser/viewTree.ts`](src/parser/viewTree.ts) - ViewNode data structure
-- [`src/renderer/renderHtml.ts`](src/renderer/renderHtml.ts) - HTML/CSS generator
-- [`src/extension.ts`](src/extension.ts) - VS Code extension entry point with webview UI
+### Input Controls & Forms
+```swift
+Form {
+    TextField("Name", text: "John Doe")
+    Slider(value: 0.5)
+    DatePicker("Date", selection: Date())
+    ColorPicker("Color", selection: .blue)
+    Toggle("Enabled", isOn: true)
+}
+```
 
----
-
-## Development
-
-```bash
-# Clone the repository
-git clone https://github.com/EhsanAzish80/SwiftUI-CrossPreview.git
-cd SwiftUI-CrossPreview
-
-# Install dependencies
-npm install
-
-# Build extension
-npm run build
-
-# Run in Extension Development Host
-# Press F5 in VS Code to launch debug session
-
-# Package for distribution
-npm run package
+### Remote Content
+```swift
+AsyncImage(url: URL(string: "https://..."))
+    .frame(width: 200, height: 200)
+    .clipShape(Circle())
 ```
 
 ---
 
-## Roadmap
+## 📋 Supported Features
+---
 
-- [x] Live preview with auto-update
-- [x] Tree-sitter Swift parser
-- [x] Core SwiftUI views & modifiers
-- [x] Device presets with iPhone mockup
-- [x] Glass materials & visual effects
-- [x] Stack alignment & spacing
-- [x] List, Form, Section, ScrollView
-- [x] ForEach support (ranges & arrays)
-- [x] Zoom-to-fit device scaling
-- [x] Comment support (// comments)
-- [x] Button, Toggle, Picker
-- [x] Gradient backgrounds (LinearGradient, RadialGradient)
-- [x] Animation indicators (.animation modifier badge)
-- [x] Custom device sizes (width × height input)
-- [x] Snapshot export (PNG download)
-- [x] Input fields (TextField, SecureField, Slider, Stepper, DatePicker, ColorPicker)
-- [x] Shape views (Rectangle, Circle, RoundedRectangle, Capsule, Ellipse)
-- [x] UI elements (Divider, Label, ProgressView, Link, Menu)
-- [x] Lazy layouts (LazyVStack, LazyHStack, Grid, Group, GeometryReader)
-- [x] Text styling (.bold, .italic, .underline, .strikethrough, .fontWeight, .kerning, .tracking)
-- [x] Advanced layout (.offset, .position, .aspectRatio, .scaledToFit/Fill, .clipShape, .mask)
-- [x] Color adjustments (.brightness, .contrast, .saturation, .hueRotation)
-- [x] Interaction (.onTapGesture, .onLongPressGesture, .disabled)
-- [x] Lifecycle hooks (.onAppear, .onDisappear)
-- [x] Transitions and accessibility (.transition, .accessibilityLabel/Hint/Value)
+## 📋 Supported Features
+
+### Views (42 Total)
+
+**Layouts**
+- VStack, HStack, ZStack, LazyVStack, LazyHStack
+- Grid, Group, GeometryReader
+
+**Navigation & App Structure** ⭐ NEW in v1.3.0
+- NavigationView, NavigationStack, NavigationLink, NavigationSplitView
+- TabView with interactive tab switching
+
+**Content** ⭐ v1.3.0 Enhanced
+- Text, Image, Spacer
+- AsyncImage (remote images)
+- TextEditor (multi-line input)
+- DisclosureGroup (expandable sections)
+
+**Lists & Forms**
+- List, Form, Section, ScrollView, ForEach
+
+**Input Controls**
+- Button, Toggle, Picker
+- TextField, SecureField, TextEditor
+- Slider, Stepper, DatePicker, ColorPicker
+
+**Shapes**
+- Rectangle, Circle, RoundedRectangle, Capsule, Ellipse
+
+**Graphics**
+- LinearGradient, RadialGradient
+
+**UI Elements**
+- Divider, Label, ProgressView, Link, Menu
+
+### Modifiers (71+ Total)
+
+**Layout & Positioning**
+- `.padding()`, `.frame()`, `.offset()`, `.position()`
+- `.aspectRatio()`, `.scaledToFit()`, `.scaledToFill()`
+- `.clipped()`, `.clipShape()`, `.mask()`
+
+**Navigation** ⭐ NEW in v1.3.0
+- `.navigationTitle()`, `.navigationBarTitleDisplayMode()`
+- `.toolbar()`, `.toolbarBackground()`
+- `.navigationBarBackButtonHidden()`, `.searchable()`
+
+**Tabs** ⭐ NEW in v1.3.0
+- `.tabItem()`, `.badge()`
+
+**Colors & Styling**
+- `.foregroundColor()`, `.foregroundStyle()`, `.background()`, `.tint()`
+- `.opacity()`, `.brightness()`, `.contrast()`, `.saturation()`, `.hueRotation()`
+
+**Glass Materials**
+- `.background(.ultraThinMaterial)`, `.background(.thinMaterial)`, `.background(.regularMaterial)`
+
+**Typography**
+- `.font()`, `.bold()`, `.italic()`, `.underline()`, `.strikethrough()`
+- `.fontWeight()`, `.kerning()`, `.tracking()`, `.baselineOffset()`
+- `.multilineTextAlignment()`, `.lineLimit()`
+
+**Visual Effects**
+- `.cornerRadius()`, `.shadow()`, `.blur()`, `.border()`
+
+**Shapes**
+- `.fill()`, `.stroke()`
+
+**Transforms**
+- `.rotationEffect()`, `.scaleEffect()`, `.offset()`
+
+**Animation**
+- `.animation()`, `.transition()`
+
+**Interaction**
+- `.onTapGesture()`, `.onLongPressGesture()`, `.disabled()`
+
+**Additional** ⭐ NEW in v1.3.0
+- `.id()`, `.refreshable()`, `.swipeActions()`, `.contextMenu()`
+- `.sheet()`, `.fullScreenCover()`, `.alert()`
+
+**Lifecycle**
+- `.onAppear()`, `.onDisappear()`
+
+**Accessibility**
+- `.accessibilityLabel()`, `.accessibilityHint()`, `.accessibilityValue()`
+
+**Layering**
+- `.overlay()`
+
+### Device Presets
+
+- 📱 **Phone** - iPhone 15 Pro mockup with Dynamic Island (390×844)
+- 📱 **Tablet** - iPad Pro (1024×1366)
+- 💻 **Desktop** - Large display (1440×900)
+- ⚙️ **Custom** - Set your own width × height
+
+### Color Palette (15 Colors)
+
+red, blue, green, yellow, purple, pink, orange, mint, teal, cyan, indigo, brown, white, gray, black
+
+### Font Styles (11 Styles)
+
+largeTitle, title, title2, title3, headline, body, callout, subheadline, footnote, caption, caption2
 
 ---
 
-## How to Give Feedback
+## 🎯 Why Use SwiftUI CrossPreview?
 
-We'd love to hear from you! If you encounter bugs, have feature requests, or want to contribute:
-
-**Report Issues:** [GitHub Issues](https://github.com/EhsanAzish80/SwiftUI-CrossPreview/issues)
-
-**Labels:**
-- `bug` - Something isn't working
-- `enhancement` - New feature or request
-- `parser` - Issues with Swift/SwiftUI parsing
-- `renderer` - Issues with HTML/CSS rendering
-- `documentation` - Documentation improvements
-
-**Feature Requests:** Open an issue with the `enhancement` label and describe your use case!
+✅ **No Mac Required** - Preview SwiftUI on Windows, Linux, or macOS  
+✅ **No Xcode** - Work entirely in VS Code  
+✅ **No Simulators** - Instant rendering without heavy iOS simulators  
+✅ **Fast Iteration** - See changes in 300ms  
+✅ **Accurate Rendering** - Faithful to SwiftUI's visual appearance  
+✅ **Complete Apps** - Preview navigation, tabs, forms, and more  
+✅ **Open Source** - MIT license, community-driven
 
 ---
 
-## License
+## 💡 Example Use Cases
 
-MIT
+### Learning SwiftUI
+Perfect for developers learning SwiftUI who don't have access to a Mac or Xcode.
+
+### Cross-Platform Development
+Build SwiftUI interfaces on Windows or Linux before testing on actual devices.
+
+### Quick Prototyping
+Rapidly iterate on UI designs without waiting for Xcode builds or simulator launches.
+
+### Documentation
+Create SwiftUI code examples and see them rendered inline.
+
+### Teaching
+Demonstrate SwiftUI concepts with instant visual feedback.
 
 ---
 
-## Credits
+## 🛠️ How It Works
 
-Built with [tree-sitter](https://tree-sitter.github.io/) and [tree-sitter-swift](https://github.com/alex-pinkus/tree-sitter-swift).
+```
+Swift Code → Tree-Sitter Parser → ViewNode Tree → HTML/CSS Renderer → VS Code Webview
+```
+
+1. **Parser** - Uses tree-sitter-swift for robust AST parsing with detailed error messages
+2. **ViewNode Tree** - Converts AST to internal representation of SwiftUI view hierarchy
+3. **Renderer** - Generates HTML/CSS that closely matches SwiftUI's visual appearance
+4. **Webview** - Displays in VS Code with live updates as you type
+
+**Key Technologies:**
+- [tree-sitter](https://tree-sitter.github.io/) - Incremental parsing
+- [tree-sitter-swift](https://github.com/alex-pinkus/tree-sitter-swift) - Swift grammar
+- TypeScript - Extension logic
+- HTML/CSS - Visual rendering
+
+---
+
+## 📖 Advanced Features
+
+### Live Update
+Auto-updates preview 300ms after you stop typing. No need to save or rebuild.
+
+### Error Diagnostics
+Shows clear error messages when Swift code cannot be parsed, with line numbers and suggestions.
+
+### Device Scaling
+Smart zoom-to-fit ensures your preview always fits the available space.
+
+### Snapshot Export
+Download your preview as PNG image (coming in next release).
+
+### Comment Support
+Properly handles `//` single-line comments in SwiftUI code.
+
+### Complex Layouts
+Supports nested stacks, ForEach loops, List/Form structures, and conditional rendering.
+
+---
+
+## 🔄 Recent Updates
+
+### v1.3.0 (Latest) - Navigation & App Structure
+- ✨ NavigationView, NavigationStack, NavigationLink, NavigationSplitView
+- ✨ TabView with interactive tab switching and badges
+- ✨ AsyncImage for remote image loading
+- ✨ TextEditor for multi-line text input
+- ✨ DisclosureGroup for expandable content
+- ✨ State visualization (@State, @Binding, @StateObject badges)
+- ✨ 14 new modifiers (navigationTitle, tabItem, badge, searchable, and more)
+- 📊 Now supports 42 views and 71+ modifiers
+
+### v1.2.0 - Input Controls & Visual Effects
+- Added Slider, Stepper, DatePicker, ColorPicker, ProgressView, Menu
+- Lazy layouts (LazyVStack, LazyHStack, Grid)
+- Color adjustments (brightness, contrast, saturation, hueRotation)
+- Advanced layout modifiers
+
+### v1.1.0 - Shapes & Gradients
+- Shape views (Rectangle, Circle, RoundedRectangle, Capsule, Ellipse)
+- LinearGradient and RadialGradient
+- Text styling modifiers
+- Animation indicators
+
+---
+
+## 🤝 Contributing
+
+We welcome contributions! Here's how you can help:
+
+**Report Bugs:** [GitHub Issues](https://github.com/EhsanAzish80/SwiftUI-CrossPreview/issues)  
+**Request Features:** Open an issue with the `enhancement` label  
+**Submit PRs:** Fork, code, test, and submit pull requests
+
+**Areas for Contribution:**
+- Adding more SwiftUI views and modifiers
+- Improving parsing accuracy
+- Enhancing visual rendering
+- Documentation and examples
+- Performance optimizations
+
+---
+
+## 📚 Documentation
+
+- [CHANGELOG.md](CHANGELOG.md) - Release history
+- [DEVELOPMENT.md](DEVELOPMENT.md) - Development guide
+- [FEATURES_v1.3.0.md](FEATURES_v1.3.0.md) - Latest features
+- [RELEASE_v1.3.0.md](RELEASE_v1.3.0.md) - v1.3.0 release notes
+
+---
+
+## ⚠️ Limitations
+
+This is a **preview tool**, not a SwiftUI runtime. Some limitations:
+
+- No actual code execution (SwiftUI logic doesn't run)
+- No @State, @Binding, or other property wrappers (static preview only)
+- Navigation doesn't actually navigate (shows structure only)
+- Button actions don't execute
+- Animations show indicators but don't animate
+- Some advanced SwiftUI features not yet supported
+
+**Best for:** Visual preview, layout exploration, learning, prototyping  
+**Not for:** Debugging logic, testing interactivity, performance profiling
+
+---
+
+## 🗺️ Roadmap
+
+**Upcoming Features:**
+- [x] State visualization (@State, @Binding badges) ✨ NEW in v1.3.0
+- [ ] Swift Charts support
+- [ ] MapKit basic support  
+- [ ] Custom shapes and Canvas
+- [ ] Matched geometry effects
+- [ ] Environment values display
+- [ ] Improved animation previews
+
+**Long-term Goals:**
+- Interactive component library
+- Export to Figma/Sketch
+- Collaborative preview sharing
+- Theme customization
+
+---
+
+## 📄 License
+
+MIT License - See [LICENSE](LICENSE) file for details
+
+---
+
+## 🙏 Acknowledgments
+
+- [tree-sitter](https://tree-sitter.github.io/) - Parsing library
+- [tree-sitter-swift](https://github.com/alex-pinkus/tree-sitter-swift) - Swift grammar
+- Apple SwiftUI - Design inspiration
+- VS Code Extension API - Platform
+
+---
+
+## 📞 Support
+
+**Questions?** Open a [GitHub Discussion](https://github.com/EhsanAzish80/SwiftUI-CrossPreview/discussions)  
+**Bugs?** Report an [Issue](https://github.com/EhsanAzish80/SwiftUI-CrossPreview/issues)  
+**Feature Ideas?** Share in [Discussions](https://github.com/EhsanAzish80/SwiftUI-CrossPreview/discussions)
+
+---
+
+<div align="center">
+
+**Made with ❤️ for the SwiftUI community**
+
+⭐ Star us on [GitHub](https://github.com/EhsanAzish80/SwiftUI-CrossPreview) if you find this useful!
+
+</div>

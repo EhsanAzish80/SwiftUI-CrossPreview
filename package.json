@@ -1,8 +1,8 @@
 {
   "name": "swiftui-crosspreview",
   "displayName": "SwiftUI CrossPreview",
-  "version": "1.1.0",
-  "description": "Cross-platform SwiftUI preview for VS Code. Parses SwiftUI with tree-sitter, builds a layout tree, and renders an approximate UI in a webview using HTML/CSS — no Mac, no Xcode.",
+  "version": "1.3.0",
+  "description": "Live SwiftUI preview for VS Code on any platform. No Mac, no Xcode required. Supports 42 views, 71+ modifiers, navigation, tabs, and more.",
   "publisher": "ehsanazish",
   "icon": "media/icon.png",
   "engines": {
@@ -10,18 +10,57 @@
   },
   "categories": [
     "Programming Languages",
-    "Visualization"
+    "Visualization",
+    "Other"
+  ],
+  "keywords": [
+    "swift",
+    "swiftui",
+    "preview",
+    "live preview",
+    "ios",
+    "apple",
+    "cross-platform",
+    "navigation",
+    "tabview",
+    "ui",
+    "visualization",
+    "tree-sitter",
+    "macos",
+    "iphone",
+    "ipad"
   ],
   "repository": {
     "type": "git",
     "url": "https://github.com/EhsanAzish80/SwiftUI-CrossPreview"
   },
+  "bugs": {
+    "url": "https://github.com/EhsanAzish80/SwiftUI-CrossPreview/issues"
+  },
+  "homepage": "https://github.com/EhsanAzish80/SwiftUI-CrossPreview#readme",
+  "qna": "https://github.com/EhsanAzish80/SwiftUI-CrossPreview/discussions",
+  "galleryBanner": {
+    "color": "#1e1e1e",
+    "theme": "dark"
+  },
   "main": "./dist/extension.js",
+  "activationEvents": [
+    "onLanguage:swift"
+  ],
   "contributes": {
     "commands": [
       {
         "command": "swiftuiPreview.open",
-        "title": "SwiftUI CrossPreview: Open Preview"
+        "title": "SwiftUI CrossPreview: Open Preview",
+        "category": "SwiftUI"
+      }
+    ],
+    "languages": [
+      {
+        "id": "swift",
+        "extensions": [
+          ".swift"
+        ]
       }
     ]
   },
@@ -41,23 +80,28 @@
     "@types/vscode": "^1.75.0",
     "@typescript-eslint/eslint-plugin": "^6.0.0",
     "@typescript-eslint/parser": "^6.0.0",
+    "@vscode/vsce": "^3.7.0",
     "esbuild": "^0.19.0",
     "eslint": "^8.0.0",
-    "typescript": "^5.0.0",
     "tree-sitter": "^0.21.0",
-    "tree-sitter-swift": "^0.6.0"
+    "tree-sitter-swift": "^0.6.0",
+    "typescript": "^5.0.0"
   },
-  "dependencies": {},
-  "keywords": [
-    "swift",
-    "swiftui",
-    "preview",
-    "tree-sitter",
-    "ios",
-    "apple",
-    "cross-platform",
-    "visualization"
-  ],
-  "author": "Ehsan Azish",
-  "license": "MIT"
+  "author": {
+    "name": "Ehsan Azish",
+    "url": "https://github.com/EhsanAzish80"
+  },
+  "license": "MIT",
+  "badges": [
+    {
+      "url": "https://img.shields.io/visual-studio-marketplace/v/ehsanazish.swiftui-crosspreview",
+      "href": "https://marketplace.visualstudio.com/items?itemName=ehsanazish.swiftui-crosspreview",
+      "description": "Version"
+    },
+    {
+      "url": "https://img.shields.io/visual-studio-marketplace/i/ehsanazish.swiftui-crosspreview",
+      "href": "https://marketplace.visualstudio.com/items?itemName=ehsanazish.swiftui-crosspreview",
+      "description": "Installs"
+    }
+  ]
 }
