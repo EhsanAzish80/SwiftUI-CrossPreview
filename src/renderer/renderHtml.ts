@@ -27,6 +27,7 @@ function buildStyle(node: ViewNode): string {
     }
     
     const styles: string[] = [];
+    let hasOverlay = false;
     
     for (const modifier of node.modifiers) {
         switch (modifier.name) {
@@ -52,6 +53,15 @@ function buildStyle(node: ViewNode): string {
                 }
                 break;
                 
+            case 'backgroundMaterial':
+            case 'material':
+                if (modifier.args.material || modifier.args.kind) {
+                    const materialKind = modifier.args.material || modifier.args.kind;
+                    const materialStyles = getMaterialStyles(materialKind);
+                    styles.push(...materialStyles);
+                }
+                break;
+                
             case 'font':
                 if (modifier.args.style) {
                     const { fontSize, fontWeight } = swiftFontStyleToCss(modifier.args.style);
@@ -74,10 +84,80 @@ function buildStyle(node: ViewNode): string {
                     styles.push(`border-radius: ${modifier.args.radius}px`);
                 }
                 break;
+                
+            case 'shadow':
+                const radius = modifier.args.radius !== undefined ? modifier.args.radius : 8;
+                styles.push(`box-shadow: 0 ${radius / 2}px ${radius * 2}px rgba(0,0,0,0.35)`);
+                break;
+                
+            case 'opacity':
+                if (modifier.args.value !== undefined) {
+                    styles.push(`opacity: ${modifier.args.value}`);
+                }
+                break;
+                
+            case 'blur':
+                if (modifier.args.radius !== undefined) {
+                    styles.push(`filter: blur(${modifier.args.radius}px)`);
+                }
+                break;
+                
+            case 'multilineTextAlignment':
+                if (modifier.args.alignment) {
+                    const alignment = modifier.args.alignment;
+                    if (alignment === 'leading') styles.push('text-align: left');
+                    else if (alignment === 'center') styles.push('text-align: center');
+                    else if (alignment === 'trailing') styles.push('text-align: right');
+                }
+                break;
+                
+            case 'lineLimit':
+                if (modifier.args.lines !== undefined) {
+                    styles.push('display: -webkit-box');
+                    styles.push(`-webkit-line-clamp: ${modifier.args.lines}`);
+                    styles.push('-webkit-box-orient: vertical');
+                    styles.push('overflow: hidden');
+                }
+                break;
+                
+            case 'overlay':
+                hasOverlay = true;
+                break;
         }
     }
     
     return styles.length > 0 ? ` style="${styles.join('; ')}"` : '';
+}
+
+/**
+ * Get CSS styles for glass/material backgrounds
+ */
+function getMaterialStyles(kind: string): string[] {
+    const styles: string[] = [];
+    
+    switch (kind.toLowerCase()) {
+        case 'ultrathin':
+            styles.push('background-color: rgba(255,255,255,0.08)');
+            styles.push('backdrop-filter: blur(18px)');
+            styles.push('border: 1px solid rgba(255,255,255,0.18)');
+            break;
+        case 'thin':
+            styles.push('background-color: rgba(255,255,255,0.12)');
+            styles.push('backdrop-filter: blur(18px)');
+            styles.push('border: 1px solid rgba(255,255,255,0.2)');
+            break;
+        case 'regular':
+            styles.push('background-color: rgba(255,255,255,0.18)');
+            styles.push('backdrop-filter: blur(18px)');
+            styles.push('border: 1px solid rgba(255,255,255,0.22)');
+            break;
+        default:
+            styles.push('background-color: rgba(255,255,255,0.12)');
+            styles.push('backdrop-filter: blur(18px)');
+            styles.push('border: 1px solid rgba(255,255,255,0.2)');
+    }
+    
+    return styles;
 }
 
 /**
@@ -128,22 +208,78 @@ function swiftFontStyleToCss(style: string): { fontSize: string; fontWeight: str
 }
 
 function renderNode(node: ViewNode): string {
+    // Check if node has overlay modifier
+    const overlayModifier = node.modifiers?.find(m => m.name === 'overlay');
+    
+    // Build base element
+    let baseHtml = '';
     const style = buildStyle(node);
+    
+    // Handle stack alignment and spacing in class/style
+    let stackClasses = '';
+    let stackStyles = '';
     
     switch (node.kind) {
         case 'VStack':
-            return `<div class="vstack"${style}>${node.children.map(renderNode).join('')}</div>`;
+            stackClasses = 'vstack';
+            if (node.props.spacing !== undefined) {
+                stackStyles += `gap: ${node.props.spacing}px; `;
+            }
+            if (node.props.alignment) {
+                const align = node.props.alignment;
+                if (align === 'leading') stackStyles += 'align-items: flex-start; ';
+                else if (align === 'center') stackStyles += 'align-items: center; ';
+                else if (align === 'trailing') stackStyles += 'align-items: flex-end; ';
+            }
+            baseHtml = `<div class="${stackClasses}"${stackStyles ? ` style="${stackStyles.trim()}"` : ''}${style}>${node.children.map(renderNode).join('')}</div>`;
+            break;
+            
         case 'HStack':
-            return `<div class="hstack"${style}>${node.children.map(renderNode).join('')}</div>`;
+            stackClasses = 'hstack';
+            if (node.props.spacing !== undefined) {
+                stackStyles += `gap: ${node.props.spacing}px; `;
+            }
+            if (node.props.alignment) {
+                const align = node.props.alignment;
+                if (align === 'top') stackStyles += 'align-items: flex-start; ';
+                else if (align === 'center') stackStyles += 'align-items: center; ';
+                else if (align === 'bottom') stackStyles += 'align-items: flex-end; ';
+            }
+            baseHtml = `<div class="${stackClasses}"${stackStyles ? ` style="${stackStyles.trim()}"` : ''}${style}>${node.children.map(renderNode).join('')}</div>`;
+            break;
+            
+        case 'ZStack':
+            baseHtml = `<div class="zstack"${style}>${node.children.map(renderNode).join('')}</div>`;
+            break;
+            
         case 'Text':
-            return `<div class="text"${style}>${escapeHtml(node.props.text ?? '')}</div>`;
+            baseHtml = `<div class="text"${style}>${escapeHtml(node.props.text ?? '')}</div>`;
+            break;
+            
         case 'Image':
-            return `<div class="image-placeholder"${style}>${escapeHtml(node.props.name ?? 'Image')}</div>`;
+            baseHtml = `<div class="image-placeholder"${style}>${escapeHtml(node.props.name ?? 'Image')}</div>`;
+            break;
+            
         case 'Spacer':
-            return `<div class="spacer"${style}></div>`;
+            baseHtml = `<div class="spacer"${style}></div>`;
+            break;
+            
         default:
-            return `<div class="custom"${style}>${escapeHtml(node.kind)}</div>`;
+            baseHtml = `<div class="custom"${style}>${escapeHtml(node.kind)}</div>`;
     }
+    
+    // Wrap with overlay if present
+    if (overlayModifier && overlayModifier.args.content) {
+        const overlayContent = renderNode(overlayModifier.args.content);
+        return `<div class="overlay-container" style="position: relative;">
+            ${baseHtml}
+            <div class="overlay-content" style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none;">
+                ${overlayContent}
+            </div>
+        </div>`;
+    }
+    
+    return baseHtml;
 }
 
 function escapeHtml(str: string): string {

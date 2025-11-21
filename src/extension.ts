@@ -138,6 +138,9 @@ function startLivePreviewForDocument(
 function updatePreviewFromDocument(document: vscode.TextDocument, panel: vscode.WebviewPanel) {
     const source = document.getText();
     
+    // Extract view name
+    const viewName = extractViewName(source);
+    
     // Parse with tree-sitter
     const { root, errors } = parseSwiftToViewTree(source);
     
@@ -164,8 +167,21 @@ function updatePreviewFromDocument(document: vscode.TextDocument, panel: vscode.
         root: root,
         html: html,
         errorHtml: errorHtml,
-        error: error
+        error: error,
+        meta: {
+            viewName: viewName,
+            updatedAt: new Date().toISOString()
+        }
     });
+}
+
+/**
+ * Extract the struct name from a Swift View
+ */
+function extractViewName(source: string): string | null {
+    // Match struct name that conforms to View
+    const match = source.match(/struct\s+(\w+)\s*:\s*View/);
+    return match ? match[1] : null;
 }
 
 /**
@@ -185,14 +201,24 @@ function getPreviewHtml(webview: vscode.Webview, context: vscode.ExtensionContex
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
             margin: 0;
             padding: 20px;
-            background-color: #1e1e1e;
+            background-color: #1D1D1F;
             color: #d4d4d4;
         }
         
         h1 {
             color: #ffffff;
-            margin-bottom: 20px;
+            margin: 0 0 8px 0;
             font-size: 18px;
+            font-weight: 600;
+            text-align: center;
+        }
+        
+        #view-name {
+            color: #8e8e93;
+            font-size: 13px;
+            text-align: center;
+            margin-bottom: 16px;
+            font-weight: 400;
         }
         
         #header {
@@ -220,60 +246,103 @@ function getPreviewHtml(webview: vscode.Webview, context: vscode.ExtensionContex
             margin-bottom: 16px;
         }
         
-        #toolbar {
+        #device-wrapper {
             display: flex;
-            gap: 8px;
-            margin-bottom: 16px;
-            padding: 8px 12px;
-            background-color: #252526;
-            border-radius: 4px;
+            justify-content: center;
+            padding: 24px 0;
         }
         
-        #toolbar button {
-            background-color: #3c3c3c;
+        #device-bezel {
+            background: #111216;
+            border-radius: 42px;
+            padding: 14px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        
+        #device-bezel.device-phone {
+            max-width: 430px;
+        }
+        
+        #device-bezel.device-tablet {
+            max-width: 820px;
+        }
+        
+        #device-bezel.device-desktop {
+            max-width: 1024px;
+        }
+        
+        #dynamic-island {
+            position: absolute;
+            top: 18px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 120px;
+            height: 36px;
+            background: #050608;
+            border-radius: 999px;
+            z-index: 10;
+        }
+        
+        #device-screen {
+            position: relative;
+            margin-top: 36px;
+            background: #ffffff;
+            border-radius: 32px;
+            overflow: hidden;
+            min-height: 600px;
+            padding: 16px;
+        }
+        
+        #bottom-bar {
+            position: relative;
+            margin-top: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+        }
+        
+        #device-auto {
+            background-color: #0e639c;
+            color: #ffffff;
+            border: none;
+            border-radius: 4px;
+            padding: 8px 16px;
+            font-size: 13px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+        
+        #device-auto:hover {
+            background-color: #1177bb;
+        }
+        
+        .device-menu {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .device-menu label {
+            font-size: 13px;
+            color: #8e8e93;
+        }
+        
+        #device-select {
+            background-color: #2d2d30;
             color: #d4d4d4;
             border: 1px solid #454545;
             border-radius: 4px;
             padding: 6px 12px;
-            font-size: 12px;
+            font-size: 13px;
             cursor: pointer;
-            transition: background-color 0.2s;
         }
         
-        #toolbar button:hover {
-            background-color: #505050;
-        }
-        
-        #toolbar button.active {
-            background-color: #0e639c;
-            border-color: #0e639c;
-            color: #ffffff;
-        }
-        
-        #frame {
-            margin: 0 auto;
-            transition: max-width 0.3s ease;
-        }
-        
-        .device-frame {
-            background-color: #252526;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-            overflow: hidden;
-        }
-        
-        .device-phone {
-            max-width: 390px;
-            border-radius: 24px;
-        }
-        
-        .device-tablet {
-            max-width: 768px;
-            border-radius: 24px;
-        }
-        
-        .device-desktop {
-            max-width: 1024px;
-            border-radius: 8px;
+        #device-select:hover {
+            background-color: #3c3c3c;
         }
         
         .error-banner {
@@ -300,10 +369,8 @@ function getPreviewHtml(webview: vscode.Webview, context: vscode.ExtensionContex
         }
         
         #root {
-            background-color: #252526;
-            border-radius: 8px;
-            padding: 20px;
-            min-height: 300px;
+            background-color: transparent;
+            min-height: 100%;
         }
         
         .status {
@@ -332,8 +399,8 @@ function getPreviewHtml(webview: vscode.Webview, context: vscode.ExtensionContex
         .text {
           padding: 4px 8px;
           border-radius: 4px;
-          background: #1e1e1e;
-          color: #f5f5f5;
+          background: transparent;
+          color: #000000;
           font-size: 13px;
         }
 
@@ -342,6 +409,7 @@ function getPreviewHtml(webview: vscode.Webview, context: vscode.ExtensionContex
           border-radius: 4px;
           border: 1px dashed #888;
           font-size: 12px;
+          color: #000000;
         }
         
         .spacer {
@@ -351,19 +419,31 @@ function getPreviewHtml(webview: vscode.Webview, context: vscode.ExtensionContex
 </head>
 <body>
     <h1>SwiftUI CrossPreview</h1>
+    <div id="view-name">Previewing: <span id="view-name-text">-</span></div>
     <header id="header">
         <span id="status">Live</span>
         <span id="error" class="error" style="display:none;"></span>
     </header>
-    <div id="toolbar">
-        <button data-device="phone" class="active">Phone</button>
-        <button data-device="tablet">Tablet</button>
-        <button data-device="desktop">Desktop</button>
-    </div>
     <div id="errors"></div>
-    <div id="frame" class="device-frame device-phone">
-        <div id="root">
-            <p class="status">Waiting for Swift file content...</p>
+    <div id="device-wrapper">
+        <div id="device-bezel" class="device-phone">
+            <div id="dynamic-island"></div>
+            <div id="device-screen">
+                <div id="root">
+                    <p class="status">Waiting for Swift file content...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="bottom-bar">
+        <button id="device-auto" class="primary">iPhone (Automatic)</button>
+        <div class="device-menu">
+            <label>Device:</label>
+            <select id="device-select">
+                <option value="phone">iPhone</option>
+                <option value="tablet">iPad</option>
+                <option value="desktop">Desktop</option>
+            </select>
         </div>
     </div>
     
@@ -397,6 +477,16 @@ function getPreviewHtml(webview: vscode.Webview, context: vscode.ExtensionContex
                             case 'background':
                                 if (mod.args.color) {
                                     styles.push('background-color: ' + swiftColorToCss(mod.args.color));
+                                } else if (mod.args.material) {
+                                    const matStyles = getMaterialStyles(mod.args.material);
+                                    styles.push.apply(styles, matStyles);
+                                }
+                                break;
+                            case 'backgroundMaterial':
+                            case 'material':
+                                if (mod.args.material || mod.args.kind) {
+                                    const matStyles = getMaterialStyles(mod.args.material || mod.args.kind);
+                                    styles.push.apply(styles, matStyles);
                                 }
                                 break;
                             case 'font':
@@ -419,10 +509,65 @@ function getPreviewHtml(webview: vscode.Webview, context: vscode.ExtensionContex
                                     styles.push('border-radius: ' + mod.args.radius + 'px');
                                 }
                                 break;
+                            case 'shadow':
+                                const radius = mod.args.radius !== undefined ? mod.args.radius : 8;
+                                styles.push('box-shadow: 0 ' + (radius / 2) + 'px ' + (radius * 2) + 'px rgba(0,0,0,0.35)');
+                                break;
+                            case 'opacity':
+                                if (mod.args.value !== undefined) {
+                                    styles.push('opacity: ' + mod.args.value);
+                                }
+                                break;
+                            case 'blur':
+                                if (mod.args.radius !== undefined) {
+                                    styles.push('filter: blur(' + mod.args.radius + 'px)');
+                                }
+                                break;
+                            case 'multilineTextAlignment':
+                                if (mod.args.alignment) {
+                                    if (mod.args.alignment === 'leading') styles.push('text-align: left');
+                                    else if (mod.args.alignment === 'center') styles.push('text-align: center');
+                                    else if (mod.args.alignment === 'trailing') styles.push('text-align: right');
+                                }
+                                break;
+                            case 'lineLimit':
+                                if (mod.args.lines !== undefined) {
+                                    styles.push('display: -webkit-box');
+                                    styles.push('-webkit-line-clamp: ' + mod.args.lines);
+                                    styles.push('-webkit-box-orient: vertical');
+                                    styles.push('overflow: hidden');
+                                }
+                                break;
                         }
                     }
                     
                     return styles.length > 0 ? ' style="' + styles.join('; ') + '"' : '';
+                }
+                
+                function getMaterialStyles(kind) {
+                    const styles = [];
+                    switch (kind.toLowerCase()) {
+                        case 'ultrathin':
+                            styles.push('background-color: rgba(255,255,255,0.08)');
+                            styles.push('backdrop-filter: blur(18px)');
+                            styles.push('border: 1px solid rgba(255,255,255,0.18)');
+                            break;
+                        case 'thin':
+                            styles.push('background-color: rgba(255,255,255,0.12)');
+                            styles.push('backdrop-filter: blur(18px)');
+                            styles.push('border: 1px solid rgba(255,255,255,0.2)');
+                            break;
+                        case 'regular':
+                            styles.push('background-color: rgba(255,255,255,0.18)');
+                            styles.push('backdrop-filter: blur(18px)');
+                            styles.push('border: 1px solid rgba(255,255,255,0.22)');
+                            break;
+                        default:
+                            styles.push('background-color: rgba(255,255,255,0.12)');
+                            styles.push('backdrop-filter: blur(18px)');
+                            styles.push('border: 1px solid rgba(255,255,255,0.2)');
+                    }
+                    return styles;
                 }
                 
                 function swiftColorToCss(color) {
@@ -455,22 +600,63 @@ function getPreviewHtml(webview: vscode.Webview, context: vscode.ExtensionContex
                 }
                 
                 function renderNode(n) {
+                    // Check for overlay modifier
+                    const overlayMod = n.modifiers && n.modifiers.find(function(m) { return m.name === 'overlay'; });
+                    
                     const style = buildStyle(n);
+                    let baseHtml = '';
+                    let stackStyles = '';
                     
                     switch (n.kind) {
                         case 'VStack':
-                            return '<div class="vstack"' + style + '>' + n.children.map(renderNode).join('') + '</div>';
+                            if (n.props.spacing !== undefined) {
+                                stackStyles += 'gap: ' + n.props.spacing + 'px; ';
+                            }
+                            if (n.props.alignment) {
+                                if (n.props.alignment === 'leading') stackStyles += 'align-items: flex-start; ';
+                                else if (n.props.alignment === 'center') stackStyles += 'align-items: center; ';
+                                else if (n.props.alignment === 'trailing') stackStyles += 'align-items: flex-end; ';
+                            }
+                            baseHtml = '<div class="vstack"' + (stackStyles ? ' style="' + stackStyles.trim() + '"' : '') + style + '>' + n.children.map(renderNode).join('') + '</div>';
+                            break;
                         case 'HStack':
-                            return '<div class="hstack"' + style + '>' + n.children.map(renderNode).join('') + '</div>';
+                            if (n.props.spacing !== undefined) {
+                                stackStyles += 'gap: ' + n.props.spacing + 'px; ';
+                            }
+                            if (n.props.alignment) {
+                                if (n.props.alignment === 'top') stackStyles += 'align-items: flex-start; ';
+                                else if (n.props.alignment === 'center') stackStyles += 'align-items: center; ';
+                                else if (n.props.alignment === 'bottom') stackStyles += 'align-items: flex-end; ';
+                            }
+                            baseHtml = '<div class="hstack"' + (stackStyles ? ' style="' + stackStyles.trim() + '"' : '') + style + '>' + n.children.map(renderNode).join('') + '</div>';
+                            break;
+                        case 'ZStack':
+                            baseHtml = '<div class="zstack"' + style + '>' + n.children.map(renderNode).join('') + '</div>';
+                            break;
                         case 'Text':
-                            return '<div class="text"' + style + '>' + escapeHtml(n.props.text || '') + '</div>';
+                            baseHtml = '<div class="text"' + style + '>' + escapeHtml(n.props.text || '') + '</div>';
+                            break;
                         case 'Image':
-                            return '<div class="image-placeholder"' + style + '>' + escapeHtml(n.props.name || 'Image') + '</div>';
+                            baseHtml = '<div class="image-placeholder"' + style + '>' + escapeHtml(n.props.name || 'Image') + '</div>';
+                            break;
                         case 'Spacer':
-                            return '<div class="spacer"' + style + '></div>';
+                            baseHtml = '<div class="spacer"' + style + '></div>';
+                            break;
                         default:
-                            return '<div class="custom"' + style + '>' + escapeHtml(n.kind) + '</div>';
+                            baseHtml = '<div class="custom"' + style + '>' + escapeHtml(n.kind) + '</div>';
                     }
+                    
+                    // Wrap with overlay if present
+                    if (overlayMod && overlayMod.args.content) {
+                        var overlayHtml = renderNode(overlayMod.args.content);
+                        return '<div class="overlay-container" style="position: relative;">' +
+                            baseHtml +
+                            '<div class="overlay-content" style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none;">' +
+                            overlayHtml +
+                            '</div></div>';
+                    }
+                    
+                    return baseHtml;
                 }
                 
                 function escapeHtml(str) {
@@ -494,6 +680,14 @@ function getPreviewHtml(webview: vscode.Webview, context: vscode.ExtensionContex
                     const statusEl = document.getElementById('status');
                     const errorEl = document.getElementById('error');
                     const errorsEl = document.getElementById('errors');
+                    const viewNameEl = document.getElementById('view-name-text');
+                    
+                    // Update view name
+                    if (msg.meta && msg.meta.viewName) {
+                        viewNameEl.textContent = msg.meta.viewName;
+                    } else {
+                        viewNameEl.textContent = '-';
+                    }
                     
                     // Update error display
                     if (msg.error) {
@@ -517,25 +711,22 @@ function getPreviewHtml(webview: vscode.Webview, context: vscode.ExtensionContex
                     }
                     
                     // Update status timestamp
-                    if (statusEl) {
-                        statusEl.textContent = 'Live · Last update: ' + new Date().toLocaleTimeString();
+                    if (statusEl && msg.meta && msg.meta.updatedAt) {
+                        const time = new Date(msg.meta.updatedAt).toLocaleTimeString();
+                        statusEl.textContent = 'Live · ' + time;
                     }
                 }
             });
             
             // Device selection handling
             function setDevice(device) {
-                const frame = document.getElementById('frame');
-                frame.className = 'device-frame device-' + device;
+                const bezel = document.getElementById('device-bezel');
+                const select = document.getElementById('device-select');
                 
-                // Update button states
-                document.querySelectorAll('#toolbar button').forEach(btn => {
-                    if (btn.dataset.device === device) {
-                        btn.classList.add('active');
-                    } else {
-                        btn.classList.remove('active');
-                    }
-                });
+                bezel.classList.remove('device-phone', 'device-tablet', 'device-desktop');
+                bezel.classList.add('device-' + device);
+                
+                select.value = device;
                 
                 // Persist selection
                 vscode.setState({ device: device });
@@ -545,13 +736,18 @@ function getPreviewHtml(webview: vscode.Webview, context: vscode.ExtensionContex
             const state = vscode.getState();
             if (state && state.device) {
                 setDevice(state.device);
+            } else {
+                setDevice('phone');
             }
             
-            // Add click handlers to device buttons
-            document.querySelectorAll('#toolbar button').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    setDevice(btn.dataset.device);
-                });
+            // Device select change handler
+            document.getElementById('device-select').addEventListener('change', (e) => {
+                setDevice(e.target.value);
+            });
+            
+            // Auto button handler
+            document.getElementById('device-auto').addEventListener('click', () => {
+                setDevice('phone');
             });
         })();
     </script>

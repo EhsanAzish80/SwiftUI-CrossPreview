@@ -1,73 +1,109 @@
-# SwiftUI-CrossPreview
-A cross-platform SwiftUI preview engine for VS Code. Parses SwiftUI with tree-sitter, builds a layout tree, and renders it in a webview using HTML/CSS. No Mac, no Xcode, fully local. An open, extensible approach to bringing SwiftUI previews to any OS.
+# SwiftUI CrossPreview
+
+**Cross-platform SwiftUI preview engine for VS Code.** Parses SwiftUI with tree-sitter, builds a layout tree, and renders an approximate UI in a webview using HTML/CSS — no Mac, no Xcode required.
+
+---
 
 ## Status
-✅ **Live preview with auto-update now working!**
 
-The extension now features:
-- **Live editing**: Edit your Swift file and see instant updates (300ms debounce)
-- **Tree-sitter parsing**: Robust AST-based Swift parsing with detailed error messages
-- **Error UI**: Red error banner showing parse failures with specific diagnostics
-- **Status indicator**: Live timestamp showing last update time
+✅ **Live SwiftUI-style preview with auto-update is now working.**
+
+---
 
 ## Features
 
-### Currently Working
-- ✅ **Live Auto-Update** - Preview updates automatically as you type (300ms debounce)
-- ✅ **Device Presets** - Phone (390px), Tablet (768px), Desktop (1024px)
-- ✅ **Device Frame** - Animated transitions with drop shadow
-- ✅ **Tree-sitter Swift Parser** - Robust AST-based parsing with detailed error messages
-- ✅ **Full Modifier Support** - padding, foregroundColor, background, font, frame, cornerRadius
-- ✅ **15 SwiftUI Colors** - red, blue, green, yellow, purple, pink, and more
-- ✅ **11 Font Styles** - largeTitle, title, body, caption, and more
-- ✅ **Error UI** - Red error banner showing parse failures with specific diagnostics
-- ✅ **VS Code Command** - `SwiftUI CrossPreview: Open Preview`
-- ✅ **View Support** - VStack, HStack, ZStack, Text, Image, Spacer
-- ✅ **HTML/CSS Renderer** - Converts ViewNode tree to styled HTML with inline CSS
-- ✅ **Dark Theme** - Matches VS Code aesthetic
-- ✅ **Live Status** - Shows last update timestamp
+- **Live preview with auto-update** (300ms debounce) — edit your Swift code and see instant changes
+- **AST-based parsing** using tree-sitter-swift with detailed error messages
+- **Core SwiftUI support**: VStack, HStack, ZStack, Text, Image, Spacer
+- **Rich modifiers**: padding, foregroundColor, background, font, frame, cornerRadius, shadow, opacity, blur, glass materials, overlay, multilineTextAlignment, lineLimit
+- **Stack alignment & spacing**: VStack(alignment: .leading, spacing: 16)
+- **15 SwiftUI colors**: red, blue, green, yellow, purple, pink, orange, mint, teal, cyan, indigo, brown, white, gray, black
+- **11 font styles**: largeTitle, title, title2, title3, headline, body, callout, subheadline, footnote, caption, caption2
+- **Device presets** (Phone/Tablet/Desktop) with iPhone-style mockup and Dynamic Island
+- **Glass/material backgrounds**: .ultraThinMaterial, .thinMaterial, .regularMaterial with backdrop blur
+- **HTML/CSS renderer** with dark VS Code-themed UI, shadows, and modern visual effects
+- **Command**: `SwiftUI CrossPreview: Open Preview`
 
-### Supported SwiftUI Pattern
+---
+
+## Supported SwiftUI Example
+
 ```swift
-struct MyView: View {
+import SwiftUI
+
+struct GlassCard: View {
     var body: some View {
-        VStack {
-            Text("Hello CrossPreview")
-                .font(.title)
-                .foregroundColor(.blue)
+        VStack(alignment: .leading, spacing: 20) {
+            Text("Welcome")
+                .font(.largeTitle)
+                .foregroundColor(.white)
             
-            Text("Styled text")
+            Text("SwiftUI CrossPreview")
+                .font(.headline)
+                .foregroundColor(.blue)
                 .padding(16)
-                .background(Color.yellow)
-                .cornerRadius(8)
+                .background(.thinMaterial)
+                .cornerRadius(12)
+                .shadow(radius: 8)
+            
+            HStack(alignment: .center, spacing: 12) {
+                Text("Live")
+                    .opacity(0.7)
+                Text("Preview")
+                    .font(.caption)
+            }
         }
-        .frame(width: 240, height: 120)
-        .padding()
+        .padding(32)
     }
 }
 ```
 
+**Supported Views:**
+- VStack, HStack, ZStack (with alignment & spacing parameters)
+- Text, Image, Spacer
+
 **Supported Modifiers:**
-- `.padding()` and `.padding(N)`
-- `.foregroundColor(.color)` - 15 colors
-- `.background(Color.color)` - 15 colors
-- `.font(.style)` - 11 font styles
-- `.frame(width: N, height: N)`
-- `.cornerRadius(N)`
+- Layout: `.padding()`, `.padding(N)`, `.frame(width:height:)`
+- Colors: `.foregroundColor(.color)`, `.background(Color.color)`
+- Glass: `.background(.ultraThinMaterial)`, `.background(.thinMaterial)`, `.background(.regularMaterial)`
+- Typography: `.font(.style)`, `.multilineTextAlignment(.center)`, `.lineLimit(N)`
+- Visual: `.cornerRadius(N)`, `.shadow(radius:)`, `.opacity(N)`, `.blur(radius:)`
+- Layering: `.overlay(Content)`
+
+---
 
 ## Usage
 
-1. Open a Swift file containing a SwiftUI view (e.g., `examples/HelloVStack.swift`)
-2. Open the Command Palette (Cmd/Ctrl + Shift + P)
-3. Run: **"SwiftUI CrossPreview: Open Preview"**
-4. The preview panel opens on the right showing your rendered SwiftUI view
-5. **Select device preset:** Click Phone, Tablet, or Desktop in the toolbar
-6. **Edit your Swift code** - the preview updates automatically!
-7. If parsing fails, a red error banner explains what went wrong
+1. **Open a Swift file** containing a SwiftUI view (e.g., `MyView.swift`)
+2. **Open Command Palette** (Cmd/Ctrl + Shift + P)
+3. Run: **`SwiftUI CrossPreview: Open Preview`**
+4. **Select device**: Click Phone, Tablet, or Desktop in the bottom bar
+5. **Edit your Swift code** — the preview updates automatically!
+6. **Error handling**: If parsing fails, an error banner shows diagnostics
+
+---
+
+## Implementation / Architecture
+
+```
+Swift source → tree-sitter parser → ViewNode tree → HTML/CSS renderer → VS Code webview
+```
+
+**Key files:**
+- [`src/parser/swiftParser.ts`](src/parser/swiftParser.ts) - Tree-sitter Swift parser with regex fallback
+- [`src/parser/viewTree.ts`](src/parser/viewTree.ts) - ViewNode data structure
+- [`src/renderer/renderHtml.ts`](src/renderer/renderHtml.ts) - HTML/CSS generator
+- [`src/extension.ts`](src/extension.ts) - VS Code extension entry point with webview UI
+
+---
 
 ## Development
 
 ```bash
+# Clone the repository
+git clone https://github.com/EhsanAzish80/SwiftUI-CrossPreview.git
+cd SwiftUI-CrossPreview
+
 # Install dependencies
 npm install
 
@@ -75,39 +111,36 @@ npm install
 npm run build
 
 # Run in Extension Development Host
-# Press F5 in VS Code
-```
+# Press F5 in VS Code to launch debug session
 
-## Architecture
-
-```
-Swift Source Code
-    ↓
-tree-sitter Parser (parser/swiftParser.ts)
-    ↓
-ViewNode Tree (parser/viewTree.ts)
-    ↓
-HTML Renderer (renderer/renderHtml.ts)
-    ↓
-Webview Display (media/preview.html)
-```
-
-## Roadmap
-- [ ] More view types (Button, List, ScrollView)
-- [ ] More modifiers (opacity, shadow, offset, rotation, alignment)
-- [ ] Spacing parameters for stacks
-- [ ] Device frame presets ✅ (completed)
-- [ ] Custom device sizes and orientations
-- [ ] Custom view inlining
-- [ ] Tokamak/SwiftWasm semantic mode (optional)
-- [ ] Snapshot export for docs/CI
-
-## Packaging
-
-```bash
-npm install -g @vscode/vsce
-npm run compile
+# Package for distribution
 npm run package
 ```
 
-This creates a `.vsix` file that can be installed locally or published to the VS Code Marketplace. See `DEVELOPMENT.md` for full packaging instructions.
+---
+
+## Roadmap
+
+- [x] Live preview with auto-update
+- [x] Tree-sitter Swift parser
+- [x] Core SwiftUI views & modifiers
+- [x] Device presets with iPhone mockup
+- [x] Glass materials & visual effects
+- [x] Stack alignment & spacing
+- [ ] Button, List, ScrollView
+- [ ] Gradient backgrounds
+- [ ] Animation indicators
+- [ ] Custom device sizes
+- [ ] Snapshot export
+
+---
+
+## License
+
+MIT
+
+---
+
+## Credits
+
+Built with [tree-sitter](https://tree-sitter.github.io/) and [tree-sitter-swift](https://github.com/alex-pinkus/tree-sitter-swift).
