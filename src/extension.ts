@@ -4,6 +4,7 @@
 
 import * as vscode from 'vscode';
 import { fakeViewTreeFromText } from './parser/viewTree';
+import { parseSwiftToViewTree } from './parser/swiftParser';
 import { renderToHtml } from './renderer/renderHtml';
 
 let currentPanel: vscode.WebviewPanel | undefined = undefined;
@@ -35,8 +36,12 @@ export function activate(context: vscode.ExtensionContext) {
             // Get the Swift code
             const swiftCode = editor.document.getText();
             
-            // Create fake ViewNode tree from text
-            const viewTree = fakeViewTreeFromText(swiftCode);
+            // Try to parse with tree-sitter, fall back to fake parser
+            let viewTree = parseSwiftToViewTree(swiftCode);
+            if (!viewTree) {
+                console.log('Tree-sitter parsing failed, using fallback fake parser');
+                viewTree = fakeViewTreeFromText(swiftCode);
+            }
             
             // Render to HTML
             const html = renderToHtml(viewTree);

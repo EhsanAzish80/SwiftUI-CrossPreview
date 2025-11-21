@@ -37,8 +37,8 @@
     "typescript": "^5.0.0"
   },
   "dependencies": {
-    "tree-sitter": "^0.20.0",
-    "tree-sitter-swift": "^0.4.0"
+    "tree-sitter": "^0.21.0",
+    "tree-sitter-swift": "^0.6.0"
   },
   "keywords": [
     "swift",
