@@ -36,12 +36,35 @@ export interface ParseResult {
 export function parseSwiftToViewTree(source: string): ParseResult {
     const errors: string[] = [];
     
+    // Remove single-line comments
+    source = removeComments(source);
+    
     // Use tree-sitter if available, otherwise use regex fallback
     if (useTreeSitter && parser) {
         return parseWithTreeSitter(source);
     } else {
         return parseWithRegex(source);
     }
+}
+
+/**
+ * Remove single-line // comments from source code
+ */
+function removeComments(source: string): string {
+    // Split by lines, remove // comments, rejoin
+    return source.split('\n').map(line => {
+        const commentIndex = line.indexOf('//');
+        if (commentIndex !== -1) {
+            // Check if // is inside a string literal
+            const beforeComment = line.substring(0, commentIndex);
+            const quoteCount = (beforeComment.match(/"/g) || []).length;
+            // Only remove if // is not inside a string (even number of quotes before it)
+            if (quoteCount % 2 === 0) {
+                return line.substring(0, commentIndex);
+            }
+        }
+        return line;
+    }).join('\n');
 }
 
 /**
@@ -837,41 +860,38 @@ function parseRegexContainer(content: string, kind: "VStack" | "HStack" | "ZStac
     // Parse child views (Text, ForEach, Section, etc.)
     let pos = 0;
     while (pos < innerContent.length) {
-        // Try ForEach
-        const forEachMatch = innerContent.substring(pos).match(/ForEach\s*\([^{]*\{/);
-        if (forEachMatch && forEachMatch.index !== undefined) {
-            const forEachStart = pos + forEachMatch.index;
-            // Find the full ForEach block
-            const forEachNode = parseRegexForEach(innerContent.substring(forEachStart));
+        const remaining = innerContent.substring(pos).trim();
+        if (!remaining) break;
+        
+        // Try ForEach first
+        if (remaining.startsWith('ForEach')) {
+            const forEachNode = parseRegexForEach(remaining);
             if (forEachNode) {
                 children.push(forEachNode);
-                pos = forEachStart + 50; // rough skip
+                // Find end of ForEach block
+                const closureEnd = findClosureEnd(remaining);
+                pos += remaining.length - remaining.substring(closureEnd).length;
                 continue;
             }
         }
         
         // Try Text
-        const textMatch = innerContent.substring(pos).match(/Text\("([^"]+)"\)/);
-        if (textMatch && textMatch.index !== undefined) {
+        const textMatch = remaining.match(/^Text\("([^"]+)"\)/);
+        if (textMatch) {
             const text = textMatch[1];
-            const textStart = pos + textMatch.index;
-            const textEnd = textStart + textMatch[0].length;
-            
-            // Look for modifiers after this Text
-            let currentPos = textEnd;
+            let currentPos = textMatch[0].length;
             const modifiers: Modifier[] = [];
             
-            while (currentPos < innerContent.length) {
-                const remaining = innerContent.substring(currentPos);
+            while (currentPos < remaining.length) {
+                const modRemaining = remaining.substring(currentPos).trim();
                 
                 // Check if next non-whitespace is a dot (modifier)
-                const nextContent = remaining.trim();
-                if (!nextContent.startsWith('.')) {
+                if (!modRemaining.startsWith('.')) {
                     break;
                 }
                 
                 // Parse modifier
-                const modMatch = nextContent.match(/^\.(\w+)\(([^)]*)\)/);
+                const modMatch = modRemaining.match(/^\.(\w+)\(([^)]*)\)/);
                 if (modMatch) {
                     const modName = modMatch[1];
                     const modArgs = modMatch[2];
@@ -928,24 +948,24 @@ function parseRegexContainer(content: string, kind: "VStack" | "HStack" | "ZStac
                         }
                         
                         modifiers.push({ name: modName, args });
-                        currentPos += remaining.indexOf(modMatch[0]) + modMatch[0].length;
+                        currentPos += modMatch[0].length;
                     } else {
                         break;
                     }
                 }
-                
-                children.push({
-                    kind: 'Text',
-                    props: { text },
-                    modifiers,
-                    children: []
-                });
-                
-                pos = currentPos;
-            } else {
-                pos++;
-            }
+            
+            children.push({
+                kind: 'Text',
+                props: { text },
+                modifiers,
+                children: []
+            });
+            
+            pos += currentPos;
+        } else {
+            pos++;
         }
+    }
         
     // Parse modifiers on the container itself
     const stackModifiers: Modifier[] = [];
@@ -1006,6 +1026,25 @@ function parseRegexContainer(content: string, kind: "VStack" | "HStack" | "ZStac
         modifiers: stackModifiers,
         children
     };
+}
+
+/**
+ * Find the end position of a closure block
+ */
+function findClosureEnd(content: string): number {
+    const openBrace = content.indexOf('{');
+    if (openBrace === -1) return content.length;
+    
+    let braceCount = 1;
+    let pos = openBrace + 1;
+    
+    while (braceCount > 0 && pos < content.length) {
+        if (content[pos] === '{') braceCount++;
+        if (content[pos] === '}') braceCount--;
+        pos++;
+    }
+    
+    return pos;
 }
 
 /**

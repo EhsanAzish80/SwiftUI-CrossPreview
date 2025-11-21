@@ -251,6 +251,8 @@ function getPreviewHtml(webview: vscode.Webview, context: vscode.ExtensionContex
             display: flex;
             justify-content: center;
             padding: 24px 0;
+            transform-origin: top center;
+            transition: transform 0.3s ease;
         }
         
         #device-bezel {
@@ -302,7 +304,7 @@ function getPreviewHtml(webview: vscode.Webview, context: vscode.ExtensionContex
         
         #bottom-bar {
             position: relative;
-            margin-top: 16px;
+            margin-bottom: 16px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -394,12 +396,15 @@ function getPreviewHtml(webview: vscode.Webview, context: vscode.ExtensionContex
         .root {
           padding: 16px;
           font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+          display: flex;
+          flex-direction: column;
         }
 
         .vstack {
           display: flex;
           flex-direction: column;
           gap: 8px;
+          align-items: stretch;
         }
 
         .hstack {
@@ -414,6 +419,7 @@ function getPreviewHtml(webview: vscode.Webview, context: vscode.ExtensionContex
           background: transparent;
           color: #000000;
           font-size: 13px;
+          flex-shrink: 0;
         }
 
         .image-placeholder {
@@ -435,6 +441,9 @@ function getPreviewHtml(webview: vscode.Webview, context: vscode.ExtensionContex
           background: #ffffff;
           border-radius: 12px;
           padding: 8px;
+          flex-shrink: 0;
+          overflow-y: auto;
+          max-height: 100%;
         }
         
         .form {
@@ -444,6 +453,8 @@ function getPreviewHtml(webview: vscode.Webview, context: vscode.ExtensionContex
           background: #ffffff;
           border-radius: 12px;
           padding: 12px;
+          overflow-y: auto;
+          max-height: 100%;
         }
         
         .section {
@@ -467,10 +478,11 @@ function getPreviewHtml(webview: vscode.Webview, context: vscode.ExtensionContex
         }
         
         .scrollview {
-          max-height: 320px;
           overflow-y: auto;
+          overflow-x: hidden;
           display: flex;
           flex-direction: column;
+          max-height: 100%;
         }
         
         .foreach {
@@ -486,16 +498,6 @@ function getPreviewHtml(webview: vscode.Webview, context: vscode.ExtensionContex
         <span id="error" class="error" style="display:none;"></span>
     </header>
     <div id="errors"></div>
-    <div id="device-wrapper">
-        <div id="device-bezel" class="device-phone">
-            <div id="dynamic-island"></div>
-            <div id="device-screen">
-                <div id="root">
-                    <p class="status">Waiting for Swift file content...</p>
-                </div>
-            </div>
-        </div>
-    </div>
     <div id="bottom-bar">
         <button id="device-auto" class="primary">iPhone (Automatic)</button>
         <div class="device-menu">
@@ -505,6 +507,16 @@ function getPreviewHtml(webview: vscode.Webview, context: vscode.ExtensionContex
                 <option value="tablet">iPad</option>
                 <option value="desktop">Desktop</option>
             </select>
+        </div>
+    </div>
+    <div id="device-wrapper">
+        <div id="device-bezel" class="device-phone">
+            <div id="dynamic-island"></div>
+            <div id="device-screen">
+                <div id="root">
+                    <p class="status">Waiting for Swift file content...</p>
+                </div>
+            </div>
         </div>
     </div>
     
@@ -866,6 +878,43 @@ function getPreviewHtml(webview: vscode.Webview, context: vscode.ExtensionContex
             document.getElementById('device-auto').addEventListener('click', () => {
                 setDevice('phone');
             });
+            
+            // Zoom to fit window
+            function updateZoom() {
+                const wrapper = document.getElementById('device-wrapper');
+                const bezel = document.getElementById('device-bezel');
+                const container = document.body;
+                
+                if (!wrapper || !bezel) return;
+                
+                // Get dimensions
+                const containerWidth = container.clientWidth - 40; // Account for padding
+                const containerHeight = window.innerHeight - 280; // Account for header/footer
+                const bezelWidth = bezel.offsetWidth;
+                const bezelHeight = bezel.offsetHeight;
+                
+                // Calculate scale to fit
+                const scaleX = containerWidth / bezelWidth;
+                const scaleY = containerHeight / bezelHeight;
+                const scale = Math.min(scaleX, scaleY); // Allow scaling down for all devices
+                
+                // Apply transform (clamp to reasonable range)
+                const finalScale = Math.max(0.3, Math.min(scale, 1));
+                wrapper.style.transform = 'scale(' + finalScale + ')';
+            }
+            
+            // Initial zoom
+            setTimeout(updateZoom, 100);
+            
+            // Update on window resize
+            window.addEventListener('resize', updateZoom);
+            
+            // Update when device changes
+            const originalSetDevice = setDevice;
+            setDevice = function(device) {
+                originalSetDevice(device);
+                setTimeout(updateZoom, 100);
+            };
         })();
     </script>
 </body>
