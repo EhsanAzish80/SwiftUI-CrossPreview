@@ -120,6 +120,200 @@ function buildStyle(node: ViewNode): string {
                 }
                 break;
                 
+            case 'animation':
+                // Add visual indicator for animated properties
+                styles.push('position: relative');
+                break;
+                
+            case 'rotationEffect':
+                if (modifier.args.degrees !== undefined) {
+                    styles.push(`transform: rotate(${modifier.args.degrees}deg)`);
+                } else if (modifier.args.radians !== undefined) {
+                    const degrees = modifier.args.radians * (180 / Math.PI);
+                    styles.push(`transform: rotate(${degrees}deg)`);
+                }
+                break;
+                
+            case 'scaleEffect':
+                const scale = modifier.args.scale !== undefined ? modifier.args.scale : 1;
+                styles.push(`transform: scale(${scale})`);
+                break;
+                
+            case 'offset':
+                if (modifier.args.x !== undefined || modifier.args.y !== undefined) {
+                    const x = modifier.args.x || 0;
+                    const y = modifier.args.y || 0;
+                    styles.push(`transform: translate(${x}px, ${y}px)`);
+                }
+                break;
+                
+            case 'border':
+                const borderWidth = modifier.args.width || 1;
+                const borderColor = modifier.args.color ? swiftColorToCss(modifier.args.color) : '#000000';
+                styles.push(`border: ${borderWidth}px solid ${borderColor}`);
+                break;
+                
+            case 'fill':
+                if (modifier.args.color) {
+                    const fillColor = swiftColorToCss(modifier.args.color);
+                    styles.push(`background-color: ${fillColor}`);
+                }
+                break;
+                
+            case 'stroke':
+                if (modifier.args.color) {
+                    const strokeColor = swiftColorToCss(modifier.args.color);
+                    const strokeWidth = modifier.args.lineWidth || 1;
+                    styles.push(`border: ${strokeWidth}px solid ${strokeColor}`);
+                    styles.push('background-color: transparent');
+                }
+                break;
+                
+            case 'bold':
+                styles.push('font-weight: bold');
+                break;
+                
+            case 'italic':
+                styles.push('font-style: italic');
+                break;
+                
+            case 'underline':
+                styles.push('text-decoration: underline');
+                break;
+                
+            case 'strikethrough':
+                styles.push('text-decoration: line-through');
+                break;
+                
+            case 'clipped':
+                styles.push('overflow: hidden');
+                break;
+                
+            case 'onTapGesture':
+                styles.push('cursor: pointer');
+                styles.push('user-select: none');
+                break;
+                
+            case 'position':
+                if (modifier.args.x !== undefined && modifier.args.y !== undefined) {
+                    styles.push('position: absolute');
+                    styles.push(`left: ${modifier.args.x}px`);
+                    styles.push(`top: ${modifier.args.y}px`);
+                }
+                break;
+                
+            case 'aspectRatio':
+                if (modifier.args.ratio) {
+                    styles.push(`aspect-ratio: ${modifier.args.ratio}`);
+                }
+                if (modifier.args.contentMode === 'fit') {
+                    styles.push('object-fit: contain');
+                } else if (modifier.args.contentMode === 'fill') {
+                    styles.push('object-fit: cover');
+                }
+                break;
+                
+            case 'scaledToFit':
+                styles.push('object-fit: contain');
+                break;
+                
+            case 'scaledToFill':
+                styles.push('object-fit: cover');
+                break;
+                
+            case 'foregroundStyle':
+            case 'tint':
+                if (modifier.args.color) {
+                    const cssColor = swiftColorToCss(modifier.args.color);
+                    styles.push(`color: ${cssColor}`);
+                }
+                break;
+                
+            case 'clipShape':
+                if (modifier.args.shape === 'circle') {
+                    styles.push('border-radius: 50%');
+                    styles.push('overflow: hidden');
+                } else if (modifier.args.shape === 'capsule') {
+                    styles.push('border-radius: 9999px');
+                    styles.push('overflow: hidden');
+                } else {
+                    styles.push('overflow: hidden');
+                }
+                break;
+                
+            case 'mask':
+                styles.push('overflow: hidden');
+                break;
+                
+            case 'brightness':
+                if (modifier.args.amount !== undefined) {
+                    const brightness = 1 + modifier.args.amount;
+                    styles.push(`filter: brightness(${brightness})`);
+                }
+                break;
+                
+            case 'contrast':
+                if (modifier.args.amount !== undefined) {
+                    const contrast = 1 + modifier.args.amount;
+                    styles.push(`filter: contrast(${contrast})`);
+                }
+                break;
+                
+            case 'saturation':
+                if (modifier.args.amount !== undefined) {
+                    const saturation = modifier.args.amount;
+                    styles.push(`filter: saturate(${saturation})`);
+                }
+                break;
+                
+            case 'hueRotation':
+                if (modifier.args.degrees !== undefined) {
+                    styles.push(`filter: hue-rotate(${modifier.args.degrees}deg)`);
+                }
+                break;
+                
+            case 'onLongPressGesture':
+                styles.push('cursor: pointer');
+                styles.push('user-select: none');
+                break;
+                
+            case 'disabled':
+                if (modifier.args.isDisabled !== false) {
+                    styles.push('opacity: 0.5');
+                    styles.push('pointer-events: none');
+                }
+                break;
+                
+            case 'fontWeight':
+                const weightMap: Record<string, string> = {
+                    'ultraLight': '100', 'thin': '200', 'light': '300',
+                    'regular': '400', 'medium': '500', 'semibold': '600',
+                    'bold': '700', 'heavy': '800', 'black': '900'
+                };
+                const weight = weightMap[modifier.args.weight] || '400';
+                styles.push(`font-weight: ${weight}`);
+                break;
+                
+            case 'kerning':
+            case 'tracking':
+                if (modifier.args.amount !== undefined) {
+                    styles.push(`letter-spacing: ${modifier.args.amount}px`);
+                }
+                break;
+                
+            case 'baselineOffset':
+                if (modifier.args.offset !== undefined) {
+                    styles.push(`vertical-align: ${modifier.args.offset}px`);
+                }
+                break;
+                
+            case 'transition':
+                // Transitions are visual hints only in preview
+                if (modifier.args.type) {
+                    styles.push(`transition: all 0.3s ease`);
+                }
+                break;
+                
             case 'overlay':
                 hasOverlay = true;
                 break;
@@ -285,6 +479,149 @@ function renderNode(node: ViewNode): string {
             baseHtml = renderForEach(node);
             break;
             
+        case 'Button':
+            const buttonLabel = node.children.map(renderNode).join('');
+            baseHtml = `<button class="button"${style}>${buttonLabel || 'Button'}</button>`;
+            break;
+            
+        case 'Toggle':
+            const toggleLabel = node.props.label || 'Toggle';
+            const toggleState = node.props.isOn ? 'checked' : '';
+            baseHtml = `<label class="toggle"${style}><span>${escapeHtml(toggleLabel)}</span><input type="checkbox" ${toggleState}><span class="toggle-switch"></span></label>`;
+            break;
+            
+        case 'Picker':
+            const pickerLabel = node.props.label || 'Picker';
+            const pickerOptions = node.children.map(child => {
+                if (child.kind === 'Text') {
+                    return `<option>${escapeHtml(child.props.text || '')}</option>`;
+                }
+                return '';
+            }).join('');
+            baseHtml = `<div class="picker"${style}><label>${escapeHtml(pickerLabel)}</label><select>${pickerOptions || '<option>Option</option>'}</select></div>`;
+            break;
+            
+        case 'LinearGradient':
+            const linearColors = node.props.colors || ['blue', 'purple'];
+            const startPoint = mapGradientPoint(node.props.startPoint || 'top');
+            const endPoint = mapGradientPoint(node.props.endPoint || 'bottom');
+            const linearGradient = `linear-gradient(${calculateGradientAngle(startPoint, endPoint)}deg, ${linearColors.map((c: string) => swiftColorToCss(c)).join(', ')})`;
+            baseHtml = `<div class="gradient"${style} style="background: ${linearGradient};"></div>`;
+            break;
+            
+        case 'RadialGradient':
+            const radialColors = node.props.colors || ['blue', 'purple'];
+            const radialGradient = `radial-gradient(circle, ${radialColors.map((c: string) => swiftColorToCss(c)).join(', ')})`;
+            baseHtml = `<div class="gradient"${style} style="background: ${radialGradient};"></div>`;
+            break;
+            
+        case 'TextField':
+            const placeholder = node.props.placeholder || 'Enter text';
+            baseHtml = `<input type="text" class="textfield" placeholder="${escapeHtml(placeholder)}"${style}>`;
+            break;
+            
+        case 'SecureField':
+            const secureplaceholder = node.props.placeholder || 'Enter password';
+            baseHtml = `<input type="password" class="textfield securefield" placeholder="${escapeHtml(secureplaceholder)}"${style}>`;
+            break;
+            
+        case 'Rectangle':
+            baseHtml = `<div class="shape rectangle"${style}></div>`;
+            break;
+            
+        case 'Circle':
+            baseHtml = `<div class="shape circle"${style}></div>`;
+            break;
+            
+        case 'RoundedRectangle':
+            const cornerRadius = node.props.cornerRadius || 8;
+            const rectStyle = style ? style.replace('"', ` border-radius: ${cornerRadius}px;"`) : ` style="border-radius: ${cornerRadius}px;"`;
+            baseHtml = `<div class="shape rounded-rectangle"${rectStyle}></div>`;
+            break;
+            
+        case 'Capsule':
+            baseHtml = `<div class="shape capsule"${style}></div>`;
+            break;
+            
+        case 'Ellipse':
+            baseHtml = `<div class="shape ellipse"${style}></div>`;
+            break;
+            
+        case 'Divider':
+            baseHtml = `<div class="divider"${style}></div>`;
+            break;
+            
+        case 'Label':
+            const labelTitle = node.props.title || '';
+            const labelIcon = node.props.systemImage || '';
+            const iconHtml = labelIcon ? `<span class="label-icon">○</span>` : '';
+            baseHtml = `<div class="label"${style}>${iconHtml}<span class="label-text">${escapeHtml(labelTitle)}</span></div>`;
+            break;
+            
+        case 'Slider':
+            const sliderValue = node.props.value || 0.5;
+            const sliderMin = node.props.range[0] || 0;
+            const sliderMax = node.props.range[1] || 1;
+            baseHtml = `<input type="range" class="slider" min="${sliderMin}" max="${sliderMax}" value="${sliderValue}"${style}>`;
+            break;
+            
+        case 'Stepper':
+            const stepperLabel = node.props.label || 'Stepper';
+            const stepperValue = node.props.value || 0;
+            baseHtml = `<div class="stepper"${style}><span>${escapeHtml(stepperLabel)}</span><div class="stepper-controls"><button>-</button><span>${stepperValue}</span><button>+</button></div></div>`;
+            break;
+            
+        case 'DatePicker':
+            const dateLabel = node.props.label || 'Date';
+            baseHtml = `<div class="datepicker"${style}><label>${escapeHtml(dateLabel)}</label><input type="date"></div>`;
+            break;
+            
+        case 'ColorPicker':
+            const colorLabel = node.props.label || 'Color';
+            baseHtml = `<div class="colorpicker"${style}><label>${escapeHtml(colorLabel)}</label><input type="color" value="#007aff"></div>`;
+            break;
+            
+        case 'ProgressView':
+            if (node.props.value !== null && node.props.value !== undefined) {
+                const progressValue = Math.max(0, Math.min(1, node.props.value));
+                baseHtml = `<div class="progressview"${style}><div class="progress-bar" style="width: ${progressValue * 100}%"></div></div>`;
+            } else {
+                baseHtml = `<div class="progressview indeterminate"${style}><div class="progress-spinner"></div></div>`;
+            }
+            break;
+            
+        case 'Link':
+            const linkTitle = node.props.title || 'Link';
+            const linkDest = node.props.destination || '#';
+            baseHtml = `<a href="${escapeHtml(linkDest)}" class="link"${style}>${escapeHtml(linkTitle)}</a>`;
+            break;
+            
+        case 'Menu':
+            const menuLabel = node.props.label || 'Menu';
+            const menuItems = node.children.map(renderNode).join('');
+            baseHtml = `<div class="menu"${style}><button class="menu-button">${escapeHtml(menuLabel)} ▾</button><div class="menu-content">${menuItems}</div></div>`;
+            break;
+            
+        case 'LazyVStack':
+            baseHtml = `<div class="vstack lazy-vstack"${style}>${node.children.map(renderNode).join('')}</div>`;
+            break;
+            
+        case 'LazyHStack':
+            baseHtml = `<div class="hstack lazy-hstack"${style}>${node.children.map(renderNode).join('')}</div>`;
+            break;
+            
+        case 'Grid':
+            baseHtml = `<div class="grid"${style}>${node.children.map(renderNode).join('')}</div>`;
+            break;
+            
+        case 'Group':
+            baseHtml = `<div class="group"${style}>${node.children.map(renderNode).join('')}</div>`;
+            break;
+            
+        case 'GeometryReader':
+            baseHtml = `<div class="geometry-reader"${style}>${node.children.map(renderNode).join('')}</div>`;
+            break;
+            
         default:
             baseHtml = `<div class="custom"${style}>${escapeHtml(node.kind)}</div>`;
     }
@@ -297,6 +634,15 @@ function renderNode(node: ViewNode): string {
             <div class="overlay-content" style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none;">
                 ${overlayContent}
             </div>
+        </div>`;
+    }
+    
+    // Add animation indicator badge if animation modifier present
+    const animationModifier = node.modifiers?.find(m => m.name === 'animation');
+    if (animationModifier) {
+        return `<div style="position: relative; display: inline-block;">
+            ${baseHtml}
+            <div class="animation-badge" title="Animated">🎬</div>
         </div>`;
     }
     
@@ -334,6 +680,34 @@ function renderForEach(node: ViewNode): string {
     }
     
     return `<div class="foreach">${rows.join('')}</div>`;
+}
+
+/**
+ * Map SwiftUI gradient points to CSS positions
+ */
+function mapGradientPoint(point: string): { x: number; y: number } {
+    const pointMap: Record<string, { x: number; y: number }> = {
+        'top': { x: 50, y: 0 },
+        'bottom': { x: 50, y: 100 },
+        'leading': { x: 0, y: 50 },
+        'trailing': { x: 100, y: 50 },
+        'topLeading': { x: 0, y: 0 },
+        'topTrailing': { x: 100, y: 0 },
+        'bottomLeading': { x: 0, y: 100 },
+        'bottomTrailing': { x: 100, y: 100 },
+        'center': { x: 50, y: 50 }
+    };
+    return pointMap[point] || { x: 50, y: 50 };
+}
+
+/**
+ * Calculate gradient angle from start and end points
+ */
+function calculateGradientAngle(start: { x: number; y: number }, end: { x: number; y: number }): number {
+    const dx = end.x - start.x;
+    const dy = end.y - start.y;
+    const angle = Math.atan2(dy, dx) * (180 / Math.PI) + 90;
+    return Math.round(angle);
 }
 
 /**

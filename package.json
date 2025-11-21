@@ -1,7 +1,7 @@
 {
   "name": "swiftui-crosspreview",
   "displayName": "SwiftUI CrossPreview",
-  "version": "0.0.2",
+  "version": "1.1.0",
   "description": "Cross-platform SwiftUI preview for VS Code. Parses SwiftUI with tree-sitter, builds a layout tree, and renders an approximate UI in a webview using HTML/CSS — no Mac, no Xcode.",
   "publisher": "ehsanazish",
   "icon": "media/icon.png",

@@ -383,13 +383,135 @@ function parseCallExpression(node: any, source: string): ViewNode | null {
         return parseForEach(node, source);
     }
 
+    // Handle Button
+    if (functionName === 'Button') {
+        return parseButton(node, source);
+    }
+
+    // Handle Toggle
+    if (functionName === 'Toggle') {
+        return parseToggle(node, source);
+    }
+
+    // Handle Picker
+    if (functionName === 'Picker') {
+        return parsePicker(node, source);
+    }
+
+    // Handle LinearGradient
+    if (functionName === 'LinearGradient') {
+        return parseLinearGradient(node, source);
+    }
+
+    // Handle RadialGradient
+    if (functionName === 'RadialGradient') {
+        return parseRadialGradient(node, source);
+    }
+
+    // Handle TextField
+    if (functionName === 'TextField') {
+        return parseTextField(node, source, false);
+    }
+
+    // Handle SecureField
+    if (functionName === 'SecureField') {
+        return parseTextField(node, source, true);
+    }
+
+    // Handle shapes
+    if (functionName === 'Rectangle') {
+        return { kind: 'Rectangle', props: {}, modifiers: [], children: [] };
+    }
+    if (functionName === 'Circle') {
+        return { kind: 'Circle', props: {}, modifiers: [], children: [] };
+    }
+    if (functionName === 'RoundedRectangle') {
+        return parseRoundedRectangle(node, source);
+    }
+    if (functionName === 'Capsule') {
+        return { kind: 'Capsule', props: {}, modifiers: [], children: [] };
+    }
+    if (functionName === 'Ellipse') {
+        return { kind: 'Ellipse', props: {}, modifiers: [], children: [] };
+    }
+
+    // Handle Divider
+    if (functionName === 'Divider') {
+        return { kind: 'Divider', props: {}, modifiers: [], children: [] };
+    }
+
+    // Handle Label
+    if (functionName === 'Label') {
+        return parseLabel(node, source);
+    }
+
+    // Handle Slider
+    if (functionName === 'Slider') {
+        return parseSlider(node, source);
+    }
+
+    // Handle Stepper
+    if (functionName === 'Stepper') {
+        return parseStepper(node, source);
+    }
+
+    // Handle DatePicker
+    if (functionName === 'DatePicker') {
+        return parseDatePicker(node, source);
+    }
+
+    // Handle ColorPicker
+    if (functionName === 'ColorPicker') {
+        return parseColorPicker(node, source);
+    }
+
+    // Handle ProgressView
+    if (functionName === 'ProgressView') {
+        return parseProgressView(node, source);
+    }
+
+    // Handle Link
+    if (functionName === 'Link') {
+        return parseLink(node, source);
+    }
+
+    // Handle Menu
+    if (functionName === 'Menu') {
+        return parseMenu(node, source);
+    }
+
+    // Handle LazyVStack
+    if (functionName === 'LazyVStack') {
+        return parseContainerView(node, 'LazyVStack', source);
+    }
+
+    // Handle LazyHStack
+    if (functionName === 'LazyHStack') {
+        return parseContainerView(node, 'LazyHStack', source);
+    }
+
+    // Handle Grid
+    if (functionName === 'Grid') {
+        return parseContainerView(node, 'Grid', source);
+    }
+
+    // Handle Group
+    if (functionName === 'Group') {
+        return parseContainerView(node, 'Group', source);
+    }
+
+    // Handle GeometryReader
+    if (functionName === 'GeometryReader') {
+        return parseContainerView(node, 'GeometryReader', source);
+    }
+
     return null;
 }
 
 /**
- * Helper to parse container views (List, Form, ScrollView)
+ * Helper to parse container views (List, Form, ScrollView, LazyVStack, LazyHStack, Grid, Group, GeometryReader)
  */
-function parseContainerView(node: any, kind: "List" | "Form" | "ScrollView", source: string): ViewNode {
+function parseContainerView(node: any, kind: "List" | "Form" | "ScrollView" | "LazyVStack" | "LazyHStack" | "LazyVGrid" | "LazyHGrid" | "Grid" | "Group" | "GeometryReader", source: string): ViewNode {
     const children: ViewNode[] = [];
     const args = node.children.find(c => c.type === 'call_suffix' || c.type === 'lambda_literal');
     
@@ -477,6 +599,611 @@ function parseForEach(node: any, source: string): ViewNode {
         props,
         modifiers: [],
         children: [] // Children will be expanded by renderer
+    };
+}
+
+/**
+ * Parse Button
+ */
+function parseButton(node: any, source: string): ViewNode {
+    const props: Record<string, any> = {};
+    const children: ViewNode[] = [];
+    
+    const args = node.children.find((c: any) => c.type === 'call_suffix');
+    
+    if (args) {
+        // Look for action closure and label
+        let hasAction = false;
+        
+        for (const arg of args.children) {
+            // Check for "action:" labeled argument
+            if (arg.type === 'value_argument') {
+                const label = arg.children.find((c: any) => c.type === 'value_argument_label');
+                if (label && label.text.includes('action')) {
+                    hasAction = true;
+                    props.action = 'action';
+                }
+            }
+            
+            // Find label closure
+            if (arg.type === 'lambda_literal' || arg.type === 'closure_expression') {
+                if (hasAction) {
+                    // This is the label closure
+                    const statements = findStatementsInClosure(arg);
+                    for (const stmt of statements) {
+                        const child = parseViewExpression(stmt, source);
+                        if (child) {
+                            children.push(child);
+                        }
+                    }
+                } else {
+                    // First closure is action
+                    hasAction = true;
+                    props.action = 'action';
+                }
+            }
+        }
+        
+        // Look for string literal label
+        for (const arg of args.children) {
+            if (arg.type === 'line_string_literal' || arg.type === 'string_literal') {
+                const text = arg.text.replace(/^"|"$/g, '');
+                children.push({
+                    kind: 'Text',
+                    props: { text },
+                    modifiers: [],
+                    children: []
+                });
+                break;
+            }
+        }
+    }
+    
+    return {
+        kind: 'Button',
+        props,
+        modifiers: [],
+        children
+    };
+}
+
+/**
+ * Parse Toggle
+ */
+function parseToggle(node: any, source: string): ViewNode {
+    const props: Record<string, any> = {};
+    
+    const args = node.children.find((c: any) => c.type === 'call_suffix');
+    
+    if (args) {
+        // Look for label (string or closure)
+        for (const arg of args.children) {
+            if (arg.type === 'line_string_literal' || arg.type === 'string_literal') {
+                props.label = arg.text.replace(/^"|"$/g, '');
+                break;
+            }
+        }
+        
+        // Look for isOn binding
+        for (const arg of args.children) {
+            if (arg.type === 'value_argument') {
+                const label = arg.children.find((c: any) => c.type === 'value_argument_label');
+                if (label && label.text.includes('isOn')) {
+                    props.isOn = true;
+                }
+            }
+        }
+    }
+    
+    return {
+        kind: 'Toggle',
+        props,
+        modifiers: [],
+        children: []
+    };
+}
+
+/**
+ * Parse Picker
+ */
+function parsePicker(node: any, source: string): ViewNode {
+    const props: Record<string, any> = {};
+    const children: ViewNode[] = [];
+    
+    const args = node.children.find((c: any) => c.type === 'call_suffix');
+    
+    if (args) {
+        // Look for label
+        for (const arg of args.children) {
+            if (arg.type === 'line_string_literal' || arg.type === 'string_literal') {
+                props.label = arg.text.replace(/^"|"$/g, '');
+                break;
+            }
+        }
+        
+        // Look for selection binding
+        for (const arg of args.children) {
+            if (arg.type === 'value_argument') {
+                const label = arg.children.find((c: any) => c.type === 'value_argument_label');
+                if (label && label.text.includes('selection')) {
+                    props.selection = 'binding';
+                }
+            }
+        }
+        
+        // Find content closure
+        for (const arg of args.children) {
+            if (arg.type === 'lambda_literal' || arg.type === 'closure_expression') {
+                const statements = findStatementsInClosure(arg);
+                for (const stmt of statements) {
+                    const child = parseViewExpression(stmt, source);
+                    if (child) {
+                        children.push(child);
+                    }
+                }
+            }
+        }
+    }
+    
+    return {
+        kind: 'Picker',
+        props,
+        modifiers: [],
+        children
+    };
+}
+
+/**
+ * Parse LinearGradient
+ */
+function parseLinearGradient(node: any, source: string): ViewNode {
+    const props: Record<string, any> = {
+        colors: [],
+        startPoint: 'top',
+        endPoint: 'bottom'
+    };
+    
+    const args = node.children.find((c: any) => c.type === 'call_suffix');
+    
+    if (args) {
+        // Look for gradient parameter (deprecated) or colors array
+        for (const arg of args.children) {
+            if (arg.type === 'value_argument') {
+                const label = arg.children.find((c: any) => c.type === 'value_argument_label');
+                
+                // Parse colors array
+                if (label && (label.text.includes('colors') || label.text.includes('gradient'))) {
+                    const arrayArg = arg.children.find((c: any) => c.type === 'array_literal');
+                    if (arrayArg) {
+                        const colorMatches = arrayArg.text.match(/\.([a-z]+)/gi);
+                        if (colorMatches) {
+                            props.colors = colorMatches.map((m: string) => m.substring(1));
+                        }
+                    }
+                }
+                
+                // Parse startPoint
+                if (label && label.text.includes('startPoint')) {
+                    const pointMatch = arg.text.match(/\.(top|bottom|leading|trailing|topLeading|topTrailing|bottomLeading|bottomTrailing)/i);
+                    if (pointMatch) {
+                        props.startPoint = pointMatch[1];
+                    }
+                }
+                
+                // Parse endPoint
+                if (label && label.text.includes('endPoint')) {
+                    const pointMatch = arg.text.match(/\.(top|bottom|leading|trailing|topLeading|topTrailing|bottomLeading|bottomTrailing)/i);
+                    if (pointMatch) {
+                        props.endPoint = pointMatch[1];
+                    }
+                }
+            }
+        }
+    }
+    
+    return {
+        kind: 'LinearGradient',
+        props,
+        modifiers: [],
+        children: []
+    };
+}
+
+/**
+ * Parse RadialGradient
+ */
+function parseRadialGradient(node: any, source: string): ViewNode {
+    const props: Record<string, any> = {
+        colors: [],
+        center: 'center',
+        startRadius: 0,
+        endRadius: 100
+    };
+    
+    const args = node.children.find((c: any) => c.type === 'call_suffix');
+    
+    if (args) {
+        for (const arg of args.children) {
+            if (arg.type === 'value_argument') {
+                const label = arg.children.find((c: any) => c.type === 'value_argument_label');
+                
+                // Parse colors
+                if (label && (label.text.includes('colors') || label.text.includes('gradient'))) {
+                    const arrayArg = arg.children.find((c: any) => c.type === 'array_literal');
+                    if (arrayArg) {
+                        const colorMatches = arrayArg.text.match(/\.([a-z]+)/gi);
+                        if (colorMatches) {
+                            props.colors = colorMatches.map((m: string) => m.substring(1));
+                        }
+                    }
+                }
+                
+                // Parse center
+                if (label && label.text.includes('center')) {
+                    const centerMatch = arg.text.match(/\.([a-z]+)/i);
+                    if (centerMatch) {
+                        props.center = centerMatch[1];
+                    }
+                }
+            }
+        }
+    }
+    
+    return {
+        kind: 'RadialGradient',
+        props,
+        modifiers: [],
+        children: []
+    };
+}
+
+/**
+ * Parse TextField or SecureField
+ */
+function parseTextField(node: any, source: string, isSecure: boolean): ViewNode {
+    const props: Record<string, any> = {
+        placeholder: '',
+        text: ''
+    };
+    
+    const args = node.children.find((c: any) => c.type === 'call_suffix');
+    
+    if (args) {
+        const valueArgs = args.children.filter((c: any) => c.type === 'value_argument');
+        
+        // First argument is usually the placeholder
+        if (valueArgs.length > 0) {
+            const firstArg = valueArgs[0];
+            const stringLiteral = firstArg.children.find((c: any) => 
+                c.type === 'line_string_literal' || c.type === 'string_literal'
+            );
+            if (stringLiteral) {
+                props.placeholder = stringLiteral.text.replace(/^"/, '').replace(/"$/, '');
+            }
+        }
+    }
+    
+    return {
+        kind: isSecure ? 'SecureField' : 'TextField',
+        props,
+        modifiers: [],
+        children: []
+    };
+}
+
+/**
+ * Parse RoundedRectangle
+ */
+function parseRoundedRectangle(node: any, source: string): ViewNode {
+    const props: Record<string, any> = {
+        cornerRadius: 8
+    };
+    
+    const args = node.children.find((c: any) => c.type === 'call_suffix');
+    
+    if (args) {
+        for (const arg of args.children) {
+            if (arg.type === 'value_argument') {
+                const label = arg.children.find((c: any) => c.type === 'value_argument_label');
+                
+                if (label && label.text.includes('cornerRadius')) {
+                    const numberMatch = arg.text.match(/(\d+)/);
+                    if (numberMatch) {
+                        props.cornerRadius = parseInt(numberMatch[1]);
+                    }
+                }
+            }
+        }
+    }
+    
+    return {
+        kind: 'RoundedRectangle',
+        props,
+        modifiers: [],
+        children: []
+    };
+}
+
+/**
+ * Parse Label
+ */
+function parseLabel(node: any, source: string): ViewNode {
+    const props: Record<string, any> = {
+        title: '',
+        systemImage: ''
+    };
+    
+    const args = node.children.find((c: any) => c.type === 'call_suffix');
+    
+    if (args) {
+        const valueArgs = args.children.filter((c: any) => c.type === 'value_argument');
+        
+        for (const arg of valueArgs) {
+            const label = arg.children.find((c: any) => c.type === 'value_argument_label');
+            const stringLiteral = arg.children.find((c: any) => 
+                c.type === 'line_string_literal' || c.type === 'string_literal'
+            );
+            
+            if (label && stringLiteral) {
+                const value = stringLiteral.text.replace(/^"/, '').replace(/"$/, '');
+                
+                if (label.text === 'title:') {
+                    props.title = value;
+                } else if (label.text === 'systemImage:') {
+                    props.systemImage = value;
+                }
+            }
+        }
+    }
+    
+    return {
+        kind: 'Label',
+        props,
+        modifiers: [],
+        children: []
+    };
+}
+
+/**
+ * Parse Slider
+ */
+function parseSlider(node: any, source: string): ViewNode {
+    const props: Record<string, any> = {
+        value: 0.5,
+        range: [0, 1]
+    };
+    
+    const args = node.children.find((c: any) => c.type === 'call_suffix');
+    if (args) {
+        // Try to extract range from arguments
+        const rangeMatch = args.text.match(/in:\s*(\d+)\.\.\.?(\d+)/);
+        if (rangeMatch) {
+            props.range = [parseFloat(rangeMatch[1]), parseFloat(rangeMatch[2])];
+        }
+    }
+    
+    return {
+        kind: 'Slider',
+        props,
+        modifiers: [],
+        children: []
+    };
+}
+
+/**
+ * Parse Stepper
+ */
+function parseStepper(node: any, source: string): ViewNode {
+    const props: Record<string, any> = {
+        label: 'Stepper',
+        value: 0
+    };
+    
+    const args = node.children.find((c: any) => c.type === 'call_suffix');
+    if (args) {
+        const valueArgs = args.children.filter((c: any) => c.type === 'value_argument');
+        
+        for (const arg of valueArgs) {
+            const stringLiteral = arg.children.find((c: any) => 
+                c.type === 'line_string_literal' || c.type === 'string_literal'
+            );
+            if (stringLiteral) {
+                props.label = stringLiteral.text.replace(/^"/, '').replace(/"$/, '');
+                break;
+            }
+        }
+    }
+    
+    return {
+        kind: 'Stepper',
+        props,
+        modifiers: [],
+        children: []
+    };
+}
+
+/**
+ * Parse DatePicker
+ */
+function parseDatePicker(node: any, source: string): ViewNode {
+    const props: Record<string, any> = {
+        label: 'Date'
+    };
+    
+    const args = node.children.find((c: any) => c.type === 'call_suffix');
+    if (args) {
+        const valueArgs = args.children.filter((c: any) => c.type === 'value_argument');
+        
+        for (const arg of valueArgs) {
+            const stringLiteral = arg.children.find((c: any) => 
+                c.type === 'line_string_literal' || c.type === 'string_literal'
+            );
+            if (stringLiteral) {
+                props.label = stringLiteral.text.replace(/^"/, '').replace(/"$/, '');
+                break;
+            }
+        }
+    }
+    
+    return {
+        kind: 'DatePicker',
+        props,
+        modifiers: [],
+        children: []
+    };
+}
+
+/**
+ * Parse ColorPicker
+ */
+function parseColorPicker(node: any, source: string): ViewNode {
+    const props: Record<string, any> = {
+        label: 'Color'
+    };
+    
+    const args = node.children.find((c: any) => c.type === 'call_suffix');
+    if (args) {
+        const valueArgs = args.children.filter((c: any) => c.type === 'value_argument');
+        
+        for (const arg of valueArgs) {
+            const stringLiteral = arg.children.find((c: any) => 
+                c.type === 'line_string_literal' || c.type === 'string_literal'
+            );
+            if (stringLiteral) {
+                props.label = stringLiteral.text.replace(/^"/, '').replace(/"$/, '');
+                break;
+            }
+        }
+    }
+    
+    return {
+        kind: 'ColorPicker',
+        props,
+        modifiers: [],
+        children: []
+    };
+}
+
+/**
+ * Parse ProgressView
+ */
+function parseProgressView(node: any, source: string): ViewNode {
+    const props: Record<string, any> = {
+        value: null
+    };
+    
+    const args = node.children.find((c: any) => c.type === 'call_suffix');
+    if (args) {
+        const valueArgs = args.children.filter((c: any) => c.type === 'value_argument');
+        
+        for (const arg of valueArgs) {
+            const label = arg.children.find((c: any) => c.type === 'value_argument_label');
+            
+            if (label && label.text.includes('value')) {
+                const numberMatch = arg.text.match(/([\d.]+)/);
+                if (numberMatch) {
+                    props.value = parseFloat(numberMatch[1]);
+                }
+            }
+        }
+    }
+    
+    return {
+        kind: 'ProgressView',
+        props,
+        modifiers: [],
+        children: []
+    };
+}
+
+/**
+ * Parse Link
+ */
+function parseLink(node: any, source: string): ViewNode {
+    const props: Record<string, any> = {
+        title: 'Link',
+        destination: '#'
+    };
+    
+    const args = node.children.find((c: any) => c.type === 'call_suffix');
+    if (args) {
+        const valueArgs = args.children.filter((c: any) => c.type === 'value_argument');
+        
+        if (valueArgs.length > 0) {
+            const firstArg = valueArgs[0];
+            const stringLiteral = firstArg.children.find((c: any) => 
+                c.type === 'line_string_literal' || c.type === 'string_literal'
+            );
+            if (stringLiteral) {
+                props.title = stringLiteral.text.replace(/^"/, '').replace(/"$/, '');
+            }
+        }
+        
+        if (valueArgs.length > 1) {
+            const secondArg = valueArgs[1];
+            const label = secondArg.children.find((c: any) => c.type === 'value_argument_label');
+            if (label && label.text.includes('destination')) {
+                const stringLiteral = secondArg.children.find((c: any) => 
+                    c.type === 'line_string_literal' || c.type === 'string_literal'
+                );
+                if (stringLiteral) {
+                    props.destination = stringLiteral.text.replace(/^"/, '').replace(/"$/, '');
+                }
+            }
+        }
+    }
+    
+    return {
+        kind: 'Link',
+        props,
+        modifiers: [],
+        children: []
+    };
+}
+
+/**
+ * Parse Menu
+ */
+function parseMenu(node: any, source: string): ViewNode {
+    const props: Record<string, any> = {
+        label: 'Menu'
+    };
+    const children: ViewNode[] = [];
+    
+    const args = node.children.find((c: any) => c.type === 'call_suffix');
+    if (args) {
+        const valueArgs = args.children.filter((c: any) => c.type === 'value_argument');
+        
+        // First argument is usually the label
+        if (valueArgs.length > 0) {
+            const firstArg = valueArgs[0];
+            const stringLiteral = firstArg.children.find((c: any) => 
+                c.type === 'line_string_literal' || c.type === 'string_literal'
+            );
+            if (stringLiteral) {
+                props.label = stringLiteral.text.replace(/^"/, '').replace(/"$/, '');
+            }
+        }
+        
+        // Parse menu content from closure
+        for (const arg of args.children) {
+            if (arg.type === 'lambda_literal' || arg.type === 'closure_expression') {
+                const statements = findStatementsInClosure(arg);
+                for (const stmt of statements) {
+                    const child = parseViewExpression(stmt, source);
+                    if (child) {
+                        children.push(child);
+                    }
+                }
+            }
+        }
+    }
+    
+    return {
+        kind: 'Menu',
+        props,
+        modifiers: [],
+        children
     };
 }
 
@@ -653,6 +1380,107 @@ function parseModifierArgument(node: any, args: Record<string, any>, modifierNam
             if (overlayNode) {
                 args.content = overlayNode;
             }
+        } else if (modifierName === 'animation') {
+            // Mark that this view has animation
+            args.hasAnimation = true;
+        } else if (modifierName === 'rotationEffect') {
+            // Parse rotation angle
+            const angleMatch = node.text.match(/\.degrees\(([-\d.]+)\)|Angle\(degrees:\s*([-\d.]+)\)/);
+            const radianMatch = node.text.match(/\.radians\(([-\d.]+)\)/);
+            if (angleMatch) {
+                args.degrees = parseFloat(angleMatch[1] || angleMatch[2]);
+            } else if (radianMatch) {
+                args.radians = parseFloat(radianMatch[1]);
+            }
+        } else if (modifierName === 'scaleEffect') {
+            // Parse scale value
+            const scaleMatch = node.text.match(/scaleEffect\(([-\d.]+)\)/);
+            if (scaleMatch) {
+                args.scale = parseFloat(scaleMatch[1]);
+            }
+        } else if (modifierName === 'offset') {
+            // Parse x and y offset
+            const xMatch = node.text.match(/x:\s*([-\d.]+)/);
+            const yMatch = node.text.match(/y:\s*([-\d.]+)/);
+            if (xMatch) args.x = parseFloat(xMatch[1]);
+            if (yMatch) args.y = parseFloat(yMatch[1]);
+        } else if (modifierName === 'border') {
+            // Parse border color and width
+            const colorName = extractEnumValue(node);
+            if (colorName) {
+                args.color = colorName;
+            }
+        } else if (modifierName === 'fill' || modifierName === 'stroke') {
+            // Parse fill/stroke color
+            const colorName = extractEnumValue(node);
+            if (colorName) {
+                args.color = colorName;
+            }
+        } else if (modifierName === 'onTapGesture') {
+            // Mark that this view has tap gesture
+            args.hasTapGesture = true;
+        } else if (modifierName === 'position') {
+            // Parse x and y position
+            const xMatch = node.text.match(/x:\s*([-\d.]+)/);
+            const yMatch = node.text.match(/y:\s*([-\d.]+)/);
+            if (xMatch) args.x = parseFloat(xMatch[1]);
+            if (yMatch) args.y = parseFloat(yMatch[1]);
+        } else if (modifierName === 'aspectRatio') {
+            // Parse aspect ratio
+            const ratioMatch = node.text.match(/([\d.]+)/);
+            if (ratioMatch) args.ratio = parseFloat(ratioMatch[1]);
+            if (node.text.includes('fit')) args.contentMode = 'fit';
+            if (node.text.includes('fill')) args.contentMode = 'fill';
+        } else if (modifierName === 'scaledToFit') {
+            args.contentMode = 'fit';
+        } else if (modifierName === 'scaledToFill') {
+            args.contentMode = 'fill';
+        } else if (modifierName === 'foregroundStyle' || modifierName === 'tint') {
+            const colorName = extractEnumValue(node);
+            if (colorName) args.color = colorName;
+        } else if (modifierName === 'clipShape' || modifierName === 'mask') {
+            // Store shape type
+            if (node.text.includes('Circle')) args.shape = 'circle';
+            else if (node.text.includes('Rectangle')) args.shape = 'rectangle';
+            else if (node.text.includes('RoundedRectangle')) args.shape = 'roundedRectangle';
+            else if (node.text.includes('Capsule')) args.shape = 'capsule';
+        } else if (modifierName === 'brightness') {
+            const valueMatch = node.text.match(/([-\d.]+)/);
+            if (valueMatch) args.amount = parseFloat(valueMatch[1]);
+        } else if (modifierName === 'contrast') {
+            const valueMatch = node.text.match(/([-\d.]+)/);
+            if (valueMatch) args.amount = parseFloat(valueMatch[1]);
+        } else if (modifierName === 'saturation') {
+            const valueMatch = node.text.match(/([-\d.]+)/);
+            if (valueMatch) args.amount = parseFloat(valueMatch[1]);
+        } else if (modifierName === 'hueRotation') {
+            const angleMatch = node.text.match(/\.degrees\(([-\d.]+)\)/);
+            if (angleMatch) args.degrees = parseFloat(angleMatch[1]);
+        } else if (modifierName === 'onLongPressGesture') {
+            args.hasLongPress = true;
+        } else if (modifierName === 'disabled') {
+            const boolMatch = node.text.match(/(true|false)/);
+            if (boolMatch) args.isDisabled = boolMatch[1] === 'true';
+            else args.isDisabled = true;
+        } else if (modifierName === 'onAppear' || modifierName === 'onDisappear') {
+            args.hasLifecycle = true;
+        } else if (modifierName === 'fontWeight') {
+            const weightMatch = node.text.match(/\.(\w+)/);
+            if (weightMatch) args.weight = weightMatch[1];
+        } else if (modifierName === 'kerning' || modifierName === 'tracking') {
+            const valueMatch = node.text.match(/([-\d.]+)/);
+            if (valueMatch) args.amount = parseFloat(valueMatch[1]);
+        } else if (modifierName === 'baselineOffset') {
+            const valueMatch = node.text.match(/([-\d.]+)/);
+            if (valueMatch) args.offset = parseFloat(valueMatch[1]);
+        } else if (modifierName === 'transition') {
+            if (node.text.includes('slide')) args.type = 'slide';
+            else if (node.text.includes('scale')) args.type = 'scale';
+            else if (node.text.includes('opacity')) args.type = 'opacity';
+            else if (node.text.includes('move')) args.type = 'move';
+        } else if (modifierName === 'accessibilityLabel' || modifierName === 'accessibilityHint' || modifierName === 'accessibilityValue') {
+            const stringMatch = node.text.match(/"([^"]+)"/);
+            if (stringMatch) args.text = stringMatch[1];
         } else {
             // Try to extract from the whole expression
             const colorName = extractEnumValue(node);
@@ -808,6 +1636,108 @@ function parseRegexView(content: string): ViewNode | null {
         return parseRegexForEach(content);
     }
     
+    // Match TextField
+    const textFieldMatch = content.match(/^TextField\("([^"]+)"/);
+    if (textFieldMatch) {
+        return {
+            kind: 'TextField',
+            props: { placeholder: textFieldMatch[1], text: '' },
+            modifiers: [],
+            children: []
+        };
+    }
+    
+    // Match SecureField
+    const secureFieldMatch = content.match(/^SecureField\("([^"]+)"/);
+    if (secureFieldMatch) {
+        return {
+            kind: 'SecureField',
+            props: { placeholder: secureFieldMatch[1], text: '' },
+            modifiers: [],
+            children: []
+        };
+    }
+    
+    // Match shapes
+    if (content.startsWith('Rectangle()')) {
+        return { kind: 'Rectangle', props: {}, modifiers: [], children: [] };
+    }
+    if (content.startsWith('Circle()')) {
+        return { kind: 'Circle', props: {}, modifiers: [], children: [] };
+    }
+    const roundedRectMatch = content.match(/^RoundedRectangle\(cornerRadius:\s*(\d+)\)/);
+    if (roundedRectMatch) {
+        return {
+            kind: 'RoundedRectangle',
+            props: { cornerRadius: parseInt(roundedRectMatch[1]) },
+            modifiers: [],
+            children: []
+        };
+    }
+    if (content.startsWith('Capsule()')) {
+        return { kind: 'Capsule', props: {}, modifiers: [], children: [] };
+    }
+    if (content.startsWith('Ellipse()')) {
+        return { kind: 'Ellipse', props: {}, modifiers: [], children: [] };
+    }
+    
+    // Match Divider
+    if (content.startsWith('Divider()')) {
+        return { kind: 'Divider', props: {}, modifiers: [], children: [] };
+    }
+    
+    // Match Label
+    const labelMatch = content.match(/^Label\("([^"]+)",\s*systemImage:\s*"([^"]+)"\)/);
+    if (labelMatch) {
+        return {
+            kind: 'Label',
+            props: { title: labelMatch[1], systemImage: labelMatch[2] },
+            modifiers: [],
+            children: []
+        };
+    }
+    
+    // Match Slider
+    if (content.startsWith('Slider(')) {
+        return { kind: 'Slider', props: { value: 0.5, range: [0, 1] }, modifiers: [], children: [] };
+    }
+    
+    // Match Stepper
+    const stepperMatch = content.match(/^Stepper\("([^"]+)"/);
+    if (stepperMatch) {
+        return { kind: 'Stepper', props: { label: stepperMatch[1], value: 0 }, modifiers: [], children: [] };
+    }
+    
+    // Match DatePicker
+    const datePickerMatch = content.match(/^DatePicker\("([^"]+)"/);
+    if (datePickerMatch) {
+        return { kind: 'DatePicker', props: { label: datePickerMatch[1] }, modifiers: [], children: [] };
+    }
+    
+    // Match ColorPicker
+    const colorPickerMatch = content.match(/^ColorPicker\("([^"]+)"/);
+    if (colorPickerMatch) {
+        return { kind: 'ColorPicker', props: { label: colorPickerMatch[1] }, modifiers: [], children: [] };
+    }
+    
+    // Match ProgressView
+    if (content.startsWith('ProgressView()')) {
+        return { kind: 'ProgressView', props: { value: null }, modifiers: [], children: [] };
+    }
+    
+    // Match Link
+    const linkMatch = content.match(/^Link\("([^"]+)"/);
+    if (linkMatch) {
+        return { kind: 'Link', props: { title: linkMatch[1], destination: '#' }, modifiers: [], children: [] };
+    }
+    
+    // Match LazyVStack/LazyHStack/Grid/Group
+    const lazyStackMatch = content.match(/^(LazyVStack|LazyHStack|Grid|Group)\s*\{/);
+    if (lazyStackMatch) {
+        const kind = lazyStackMatch[1] as "LazyVStack" | "LazyHStack" | "Grid" | "Group";
+        return parseRegexContainer(content, kind);
+    }
+    
     // Match simple Text
     const textMatch = content.match(/^Text\("([^"]+)"\)/);
     if (textMatch) {
@@ -825,7 +1755,7 @@ function parseRegexView(content: string): ViewNode | null {
 /**
  * Parse container views (VStack, HStack, ZStack, List, Form, ScrollView) with regex
  */
-function parseRegexContainer(content: string, kind: "VStack" | "HStack" | "ZStack" | "List" | "Form" | "ScrollView"): ViewNode {
+function parseRegexContainer(content: string, kind: "VStack" | "HStack" | "ZStack" | "List" | "Form" | "ScrollView" | "LazyVStack" | "LazyHStack" | "LazyVGrid" | "LazyHGrid" | "Grid" | "Group" | "GeometryReader"): ViewNode {
     const stackProps: Record<string, any> = {};
     
     // Try to parse stack parameters (alignment, spacing) if applicable

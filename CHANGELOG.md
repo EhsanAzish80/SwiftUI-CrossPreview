@@ -2,6 +2,31 @@
 
 All notable changes to the SwiftUI CrossPreview extension will be documented in this file.
 
+## [1.0.0] - 2025-11-21
+
+### Added
+- **List, Form, Section, ScrollView support** - Full container view rendering with automatic scrolling
+- **ForEach support** - Parses range patterns (`1..<4`) and array literals (`["One", "Two"]`) with template expansion
+- **Comment support** - Single-line `//` comments are now properly handled and stripped during parsing
+- **Zoom-to-fit scaling** - Device mockup automatically scales to fit VS Code window size
+- **Fixed device dimensions** - Device mockup sizes remain constant regardless of content (430×880 phone, 820×1100 tablet, 1024×768 desktop)
+- **Scrollable containers** - List/Form/ScrollView automatically become scrollable when content exceeds height
+- **System gray background** - Extension preview area uses iOS-style system gray background (#f2f2f7)
+- **Device menu moved to top** - Better UI layout with device selector positioned above mockup
+
+### Fixed
+- ForEach no longer prevents sibling Text elements from rendering
+- VStack now properly displays all children vertically with correct spacing
+- Frame modifier only affects content width/height, not device mockup dimensions
+- Improved regex fallback parser with proper child node parsing
+- Text nodes before and after ForEach now render correctly
+
+### Changed
+- Updated device screen background to white for better content visibility
+- Improved parsing logic to handle complex nested structures (VStack > List > ForEach)
+- Enhanced CSS for better list and form rendering with proper flex layouts
+- Device mockup uses CSS transforms for zoom instead of changing dimensions
+
 ## [0.0.2] - 2025-11-21
 
 ### Added

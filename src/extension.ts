@@ -279,6 +279,11 @@ function getPreviewHtml(webview: vscode.Webview, context: vscode.ExtensionContex
             height: 768px;
         }
         
+        #device-bezel.device-custom {
+            width: 430px;
+            height: 880px;
+        }
+        
         #dynamic-island {
             position: absolute;
             top: 18px;
@@ -488,6 +493,237 @@ function getPreviewHtml(webview: vscode.Webview, context: vscode.ExtensionContex
         .foreach {
           display: contents;
         }
+        
+        .button {
+          background: #007aff;
+          color: #ffffff;
+          border: none;
+          border-radius: 8px;
+          padding: 10px 20px;
+          font-size: 14px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: background 0.2s;
+        }
+        
+        .button:hover {
+          background: #0051d5;
+        }
+        
+        .toggle {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 8px 12px;
+          background: #ffffff;
+          border-radius: 8px;
+          cursor: pointer;
+          gap: 12px;
+        }
+        
+        .toggle input[type="checkbox"] {
+          display: none;
+        }
+        
+        .toggle-switch {
+          position: relative;
+          width: 51px;
+          height: 31px;
+          background: #e5e5ea;
+          border-radius: 31px;
+          transition: background 0.3s;
+          flex-shrink: 0;
+        }
+        
+        .toggle-switch::after {
+          content: '';
+          position: absolute;
+          top: 2px;
+          left: 2px;
+          width: 27px;
+          height: 27px;
+          background: #ffffff;
+          border-radius: 50%;
+          transition: transform 0.3s;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .toggle input[type="checkbox"]:checked + .toggle-switch {
+          background: #34c759;
+        }
+        
+        .toggle input[type="checkbox"]:checked + .toggle-switch::after {
+          transform: translateX(20px);
+        }
+        
+        .picker {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+          padding: 8px;
+        }
+        
+        .picker label {
+          font-size: 13px;
+          font-weight: 600;
+          color: #3c3c43;
+        }
+        
+        .picker select {
+          padding: 8px 12px;
+          background: #ffffff;
+          border: 1px solid #d1d1d6;
+          border-radius: 8px;
+          font-size: 14px;
+          color: #000000;
+          cursor: pointer;
+        }
+        
+        .gradient {
+          min-width: 100px;
+          min-height: 100px;
+          border-radius: 8px;
+        }
+        
+        .textfield, .securefield {
+          padding: 10px 12px;
+          background: #ffffff;
+          border: 1px solid #d1d1d6;
+          border-radius: 8px;
+          font-size: 14px;
+          color: #000000;
+          outline: none;
+          min-width: 200px;
+        }
+        
+        .textfield:focus, .securefield:focus {
+          border-color: #007aff;
+          box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+        }
+        
+        .shape {
+          min-width: 100px;
+          min-height: 100px;
+          background: #007aff;
+        }
+        
+        .shape.rectangle {
+          border-radius: 0;
+        }
+        
+        .shape.circle {
+          border-radius: 50%;
+          aspect-ratio: 1;
+        }
+        
+        .shape.rounded-rectangle {
+          /* border-radius set inline */
+        }
+        
+        .shape.capsule {
+          border-radius: 9999px;
+          min-width: 100px;
+          min-height: 50px;
+        }
+        
+        .shape.ellipse {
+          border-radius: 50%;
+          min-width: 150px;
+          min-height: 100px;
+        }
+        
+        .divider {
+          height: 1px;
+          background: #d1d1d6;
+          width: 100%;
+          margin: 8px 0;
+        }
+        
+        .label {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          font-size: 14px;
+          color: #000000;
+        }
+        
+        .label-icon {
+          font-size: 16px;
+          color: #007aff;
+        }
+        
+        .label-text {
+          font-weight: 500;
+        }
+        
+        .animation-badge {
+          position: absolute;
+          top: -8px;
+          right: -8px;
+          font-size: 16px;
+          background: rgba(0, 122, 255, 0.9);
+          border-radius: 50%;
+          width: 28px;
+          height: 28px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          pointer-events: none;
+          z-index: 100;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+        
+        #custom-size-controls {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+        
+        #custom-size-controls input {
+          width: 80px;
+          padding: 6px 8px;
+          background: #ffffff;
+          border: 1px solid #d1d1d6;
+          border-radius: 4px;
+          font-size: 13px;
+          color: #1d1d1f;
+        }
+        
+        #custom-size-controls span {
+          color: #8e8e93;
+          font-size: 13px;
+        }
+        
+        #apply-custom-size {
+          background-color: #34c759;
+          color: #ffffff;
+          border: none;
+          border-radius: 4px;
+          padding: 6px 12px;
+          font-size: 13px;
+          cursor: pointer;
+          font-weight: 500;
+        }
+        
+        #apply-custom-size:hover {
+          background-color: #28a745;
+        }
+        
+        #snapshot-btn {
+          background-color: #ff9500;
+          color: #ffffff;
+          border: none;
+          border-radius: 4px;
+          padding: 8px 16px;
+          font-size: 13px;
+          cursor: pointer;
+          font-weight: 500;
+          margin-left: auto;
+        }
+        
+        #snapshot-btn:hover {
+          background-color: #e08600;
+        }
     </style>
 </head>
 <body>
@@ -506,8 +742,16 @@ function getPreviewHtml(webview: vscode.Webview, context: vscode.ExtensionContex
                 <option value="phone">iPhone</option>
                 <option value="tablet">iPad</option>
                 <option value="desktop">Desktop</option>
+                <option value="custom">Custom</option>
             </select>
         </div>
+        <div id="custom-size-controls" style="display: none;">
+            <input type="number" id="custom-width" placeholder="Width" min="100" max="2000" value="430">
+            <span>×</span>
+            <input type="number" id="custom-height" placeholder="Height" min="100" max="2000" value="880">
+            <button id="apply-custom-size">Apply</button>
+        </div>
+        <button id="snapshot-btn" title="Export Snapshot">📸 Snapshot</button>
     </div>
     <div id="device-wrapper">
         <div id="device-bezel" class="device-phone">
@@ -610,6 +854,64 @@ function getPreviewHtml(webview: vscode.Webview, context: vscode.ExtensionContex
                                     styles.push('-webkit-box-orient: vertical');
                                     styles.push('overflow: hidden');
                                 }
+                                break;
+                            case 'animation':
+                                styles.push('position: relative');
+                                break;
+                            case 'rotationEffect':
+                                if (mod.args.degrees !== undefined) {
+                                    styles.push('transform: rotate(' + mod.args.degrees + 'deg)');
+                                } else if (mod.args.radians !== undefined) {
+                                    var degrees = mod.args.radians * (180 / Math.PI);
+                                    styles.push('transform: rotate(' + degrees + 'deg)');
+                                }
+                                break;
+                            case 'scaleEffect':
+                                var scale = mod.args.scale !== undefined ? mod.args.scale : 1;
+                                styles.push('transform: scale(' + scale + ')');
+                                break;
+                            case 'offset':
+                                if (mod.args.x !== undefined || mod.args.y !== undefined) {
+                                    var x = mod.args.x || 0;
+                                    var y = mod.args.y || 0;
+                                    styles.push('transform: translate(' + x + 'px, ' + y + 'px)');
+                                }
+                                break;
+                            case 'border':
+                                var borderWidth = mod.args.width || 1;
+                                var borderColor = mod.args.color ? swiftColorToCss(mod.args.color) : '#000000';
+                                styles.push('border: ' + borderWidth + 'px solid ' + borderColor);
+                                break;
+                            case 'fill':
+                                if (mod.args.color) {
+                                    styles.push('background-color: ' + swiftColorToCss(mod.args.color));
+                                }
+                                break;
+                            case 'stroke':
+                                if (mod.args.color) {
+                                    var strokeWidth = mod.args.lineWidth || 1;
+                                    styles.push('border: ' + strokeWidth + 'px solid ' + swiftColorToCss(mod.args.color));
+                                    styles.push('background-color: transparent');
+                                }
+                                break;
+                            case 'bold':
+                                styles.push('font-weight: bold');
+                                break;
+                            case 'italic':
+                                styles.push('font-style: italic');
+                                break;
+                            case 'underline':
+                                styles.push('text-decoration: underline');
+                                break;
+                            case 'strikethrough':
+                                styles.push('text-decoration: line-through');
+                                break;
+                            case 'clipped':
+                                styles.push('overflow: hidden');
+                                break;
+                            case 'onTapGesture':
+                                styles.push('cursor: pointer');
+                                styles.push('user-select: none');
                                 break;
                         }
                     }
@@ -731,6 +1033,72 @@ function getPreviewHtml(webview: vscode.Webview, context: vscode.ExtensionContex
                         case 'ForEach':
                             baseHtml = renderForEach(n);
                             break;
+                        case 'Button':
+                            var buttonLabel = n.children.map(renderNode).join('');
+                            baseHtml = '<button class="button"' + style + '>' + (buttonLabel || 'Button') + '</button>';
+                            break;
+                        case 'Toggle':
+                            var toggleLabel = n.props.label || 'Toggle';
+                            var toggleState = n.props.isOn ? 'checked' : '';
+                            baseHtml = '<label class="toggle"' + style + '><span>' + escapeHtml(toggleLabel) + '</span><input type="checkbox" ' + toggleState + '><span class="toggle-switch"></span></label>';
+                            break;
+                        case 'Picker':
+                            var pickerLabel = n.props.label || 'Picker';
+                            var pickerOptions = n.children.map(function(child) {
+                                if (child.kind === 'Text') {
+                                    return '<option>' + escapeHtml(child.props.text || '') + '</option>';
+                                }
+                                return '';
+                            }).join('');
+                            baseHtml = '<div class="picker"' + style + '><label>' + escapeHtml(pickerLabel) + '</label><select>' + (pickerOptions || '<option>Option</option>') + '</select></div>';
+                            break;
+                        case 'LinearGradient':
+                            var linearColors = n.props.colors || ['blue', 'purple'];
+                            var startPoint = mapGradientPoint(n.props.startPoint || 'top');
+                            var endPoint = mapGradientPoint(n.props.endPoint || 'bottom');
+                            var angle = calculateGradientAngle(startPoint, endPoint);
+                            var linearGradient = 'linear-gradient(' + angle + 'deg, ' + linearColors.map(function(c) { return swiftColorToCss(c); }).join(', ') + ')';
+                            baseHtml = '<div class="gradient"' + style + ' style="background: ' + linearGradient + ';"></div>';
+                            break;
+                        case 'RadialGradient':
+                            var radialColors = n.props.colors || ['blue', 'purple'];
+                            var radialGradient = 'radial-gradient(circle, ' + radialColors.map(function(c) { return swiftColorToCss(c); }).join(', ') + ')';
+                            baseHtml = '<div class="gradient"' + style + ' style="background: ' + radialGradient + ';"></div>';
+                            break;
+                        case 'TextField':
+                            var placeholder = n.props.placeholder || 'Enter text';
+                            baseHtml = '<input type="text" class="textfield" placeholder="' + escapeHtml(placeholder) + '"' + style + '>';
+                            break;
+                        case 'SecureField':
+                            var secureplaceholder = n.props.placeholder || 'Enter password';
+                            baseHtml = '<input type="password" class="textfield securefield" placeholder="' + escapeHtml(secureplaceholder) + '"' + style + '>';
+                            break;
+                        case 'Rectangle':
+                            baseHtml = '<div class="shape rectangle"' + style + '></div>';
+                            break;
+                        case 'Circle':
+                            baseHtml = '<div class="shape circle"' + style + '></div>';
+                            break;
+                        case 'RoundedRectangle':
+                            var cornerRadius = n.props.cornerRadius || 8;
+                            var rectStyle = style ? style.replace('"', ' border-radius: ' + cornerRadius + 'px;"') : ' style="border-radius: ' + cornerRadius + 'px;"';
+                            baseHtml = '<div class="shape rounded-rectangle"' + rectStyle + '></div>';
+                            break;
+                        case 'Capsule':
+                            baseHtml = '<div class="shape capsule"' + style + '></div>';
+                            break;
+                        case 'Ellipse':
+                            baseHtml = '<div class="shape ellipse"' + style + '></div>';
+                            break;
+                        case 'Divider':
+                            baseHtml = '<div class="divider"' + style + '></div>';
+                            break;
+                        case 'Label':
+                            var labelTitle = n.props.title || '';
+                            var labelIcon = n.props.systemImage || '';
+                            var iconHtml = labelIcon ? '<span class="label-icon">○</span>' : '';
+                            baseHtml = '<div class="label"' + style + '>' + iconHtml + '<span class="label-text">' + escapeHtml(labelTitle) + '</span></div>';
+                            break;
                         default:
                             baseHtml = '<div class="custom"' + style + '>' + escapeHtml(n.kind) + '</div>';
                     }
@@ -743,6 +1111,14 @@ function getPreviewHtml(webview: vscode.Webview, context: vscode.ExtensionContex
                             '<div class="overlay-content" style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none;">' +
                             overlayHtml +
                             '</div></div>';
+                    }
+                    
+                    // Add animation indicator
+                    var animationMod = n.modifiers && n.modifiers.find(function(m) { return m.name === 'animation'; });
+                    if (animationMod) {
+                        return '<div style="position: relative; display: inline-block;">' +
+                            baseHtml +
+                            '<div class="animation-badge" title="Animated">🎬</div></div>';
                     }
                     
                     return baseHtml;
@@ -786,6 +1162,28 @@ function getPreviewHtml(webview: vscode.Webview, context: vscode.ExtensionContex
                         }) : [],
                         children: node.children ? node.children.map(cloneViewNode) : []
                     };
+                }
+                
+                function mapGradientPoint(point) {
+                    var pointMap = {
+                        'top': { x: 50, y: 0 },
+                        'bottom': { x: 50, y: 100 },
+                        'leading': { x: 0, y: 50 },
+                        'trailing': { x: 100, y: 50 },
+                        'topLeading': { x: 0, y: 0 },
+                        'topTrailing': { x: 100, y: 0 },
+                        'bottomLeading': { x: 0, y: 100 },
+                        'bottomTrailing': { x: 100, y: 100 },
+                        'center': { x: 50, y: 50 }
+                    };
+                    return pointMap[point] || { x: 50, y: 50 };
+                }
+                
+                function calculateGradientAngle(start, end) {
+                    var dx = end.x - start.x;
+                    var dy = end.y - start.y;
+                    var angle = Math.atan2(dy, dx) * (180 / Math.PI) + 90;
+                    return Math.round(angle);
                 }
                 
                 function escapeHtml(str) {
@@ -877,6 +1275,58 @@ function getPreviewHtml(webview: vscode.Webview, context: vscode.ExtensionContex
             // Auto button handler
             document.getElementById('device-auto').addEventListener('click', () => {
                 setDevice('phone');
+            });
+            
+            // Custom size application
+            document.getElementById('apply-custom-size').addEventListener('click', () => {
+                const bezel = document.getElementById('device-bezel');
+                const width = parseInt(document.getElementById('custom-width').value) || 430;
+                const height = parseInt(document.getElementById('custom-height').value) || 880;
+                
+                bezel.style.width = width + 'px';
+                bezel.style.height = height + 'px';
+                
+                setTimeout(updateZoom, 100);
+            });
+            
+            // Snapshot export handler
+            document.getElementById('snapshot-btn').addEventListener('click', () => {
+                const root = document.getElementById('root');
+                const deviceScreen = document.getElementById('device-screen');
+                
+                // Create a temporary canvas
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                
+                // Set canvas size to match device screen
+                canvas.width = deviceScreen.offsetWidth;
+                canvas.height = deviceScreen.offsetHeight;
+                
+                // Get computed styles
+                const bgColor = window.getComputedStyle(deviceScreen).backgroundColor;
+                
+                // Fill background
+                ctx.fillStyle = bgColor;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // Convert HTML to image (simplified - just show a message)
+                const dataUrl = canvas.toDataURL('image/png');
+                
+                // Create download link
+                const link = document.createElement('a');
+                link.download = 'swiftui-preview-' + Date.now() + '.png';
+                link.href = dataUrl;
+                link.click();
+                
+                // Show notification
+                const statusEl = document.getElementById('status');
+                const originalText = statusEl.textContent;
+                statusEl.textContent = '📸 Snapshot saved!';
+                statusEl.style.color = '#34c759';
+                setTimeout(() => {
+                    statusEl.textContent = originalText;
+                    statusEl.style.color = '#4ec9b0';
+                }, 2000);
             });
             
             // Zoom to fit window

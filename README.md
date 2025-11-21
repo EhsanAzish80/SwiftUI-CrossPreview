@@ -59,16 +59,29 @@ struct GlassCard: View {
 ```
 
 **Supported Views:**
-- VStack, HStack, ZStack (with alignment & spacing parameters)
-- Text, Image, Spacer
+- **Layouts**: VStack, HStack, ZStack, LazyVStack, LazyHStack, Grid, Group, GeometryReader
+- **Content**: Text, Image, Spacer
+- **Lists**: List, Form, Section, ScrollView, ForEach
+- **Controls**: Button, Toggle, Picker, TextField, SecureField, Slider, Stepper, DatePicker, ColorPicker
+- **Shapes**: Rectangle, Circle, RoundedRectangle, Capsule, Ellipse
+- **Graphics**: LinearGradient, RadialGradient
+- **UI Elements**: Divider, Label, ProgressView, Link, Menu
 
 **Supported Modifiers:**
-- Layout: `.padding()`, `.padding(N)`, `.frame(width:height:)`
-- Colors: `.foregroundColor(.color)`, `.background(Color.color)`
-- Glass: `.background(.ultraThinMaterial)`, `.background(.thinMaterial)`, `.background(.regularMaterial)`
-- Typography: `.font(.style)`, `.multilineTextAlignment(.center)`, `.lineLimit(N)`
-- Visual: `.cornerRadius(N)`, `.shadow(radius:)`, `.opacity(N)`, `.blur(radius:)`
-- Layering: `.overlay(Content)`
+- **Layout**: `.padding()`, `.frame(width:height:)`, `.offset(x:y:)`, `.position(x:y:)`, `.aspectRatio(_:contentMode:)`, `.clipped()`
+- **Image Scaling**: `.scaledToFit()`, `.scaledToFill()`
+- **Colors**: `.foregroundColor()`, `.foregroundStyle()`, `.background()`, `.tint()`
+- **Glass**: `.background(.ultraThinMaterial/.thinMaterial/.regularMaterial)`
+- **Typography**: `.font()`, `.bold()`, `.italic()`, `.underline()`, `.strikethrough()`, `.fontWeight()`, `.kerning()`, `.tracking()`, `.baselineOffset()`, `.multilineTextAlignment()`, `.lineLimit()`
+- **Visual**: `.cornerRadius()`, `.shadow()`, `.opacity()`, `.blur()`, `.border()`, `.clipShape()`, `.mask()`
+- **Color Adjust**: `.brightness()`, `.contrast()`, `.saturation()`, `.hueRotation()`
+- **Shapes**: `.fill()`, `.stroke()`
+- **Transform**: `.rotationEffect()`, `.scaleEffect()`, `.offset()`
+- **Animation**: `.animation()`, `.transition()`
+- **Interaction**: `.onTapGesture()`, `.onLongPressGesture()`, `.disabled()`
+- **Lifecycle**: `.onAppear()`, `.onDisappear()`
+- **Accessibility**: `.accessibilityLabel()`, `.accessibilityHint()`, `.accessibilityValue()`
+- **Layering**: `.overlay()`
 
 ---
 
@@ -127,11 +140,42 @@ npm run package
 - [x] Device presets with iPhone mockup
 - [x] Glass materials & visual effects
 - [x] Stack alignment & spacing
-- [ ] Button, List, ScrollView
-- [ ] Gradient backgrounds
-- [ ] Animation indicators
-- [ ] Custom device sizes
-- [ ] Snapshot export
+- [x] List, Form, Section, ScrollView
+- [x] ForEach support (ranges & arrays)
+- [x] Zoom-to-fit device scaling
+- [x] Comment support (// comments)
+- [x] Button, Toggle, Picker
+- [x] Gradient backgrounds (LinearGradient, RadialGradient)
+- [x] Animation indicators (.animation modifier badge)
+- [x] Custom device sizes (width × height input)
+- [x] Snapshot export (PNG download)
+- [x] Input fields (TextField, SecureField, Slider, Stepper, DatePicker, ColorPicker)
+- [x] Shape views (Rectangle, Circle, RoundedRectangle, Capsule, Ellipse)
+- [x] UI elements (Divider, Label, ProgressView, Link, Menu)
+- [x] Lazy layouts (LazyVStack, LazyHStack, Grid, Group, GeometryReader)
+- [x] Text styling (.bold, .italic, .underline, .strikethrough, .fontWeight, .kerning, .tracking)
+- [x] Advanced layout (.offset, .position, .aspectRatio, .scaledToFit/Fill, .clipShape, .mask)
+- [x] Color adjustments (.brightness, .contrast, .saturation, .hueRotation)
+- [x] Interaction (.onTapGesture, .onLongPressGesture, .disabled)
+- [x] Lifecycle hooks (.onAppear, .onDisappear)
+- [x] Transitions and accessibility (.transition, .accessibilityLabel/Hint/Value)
+
+---
+
+## How to Give Feedback
+
+We'd love to hear from you! If you encounter bugs, have feature requests, or want to contribute:
+
+**Report Issues:** [GitHub Issues](https://github.com/EhsanAzish80/SwiftUI-CrossPreview/issues)
+
+**Labels:**
+- `bug` - Something isn't working
+- `enhancement` - New feature or request
+- `parser` - Issues with Swift/SwiftUI parsing
+- `renderer` - Issues with HTML/CSS rendering
+- `documentation` - Documentation improvements
+
+**Feature Requests:** Open an issue with the `enhancement` label and describe your use case!
 
 ---
 

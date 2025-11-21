@@ -10,7 +10,7 @@ export interface Modifier {
  * Represents a node in the SwiftUI view tree
  */
 export interface ViewNode {
-    kind: "VStack" | "HStack" | "ZStack" | "Text" | "Image" | "Spacer" | "List" | "Form" | "Section" | "ForEach" | "ScrollView" | "Custom";
+    kind: "VStack" | "HStack" | "ZStack" | "Text" | "Image" | "Spacer" | "List" | "Form" | "Section" | "ForEach" | "ScrollView" | "Button" | "Toggle" | "Picker" | "LinearGradient" | "RadialGradient" | "TextField" | "SecureField" | "Rectangle" | "Circle" | "RoundedRectangle" | "Capsule" | "Ellipse" | "Divider" | "Label" | "Slider" | "Stepper" | "DatePicker" | "ColorPicker" | "ProgressView" | "Link" | "Menu" | "LazyVStack" | "LazyHStack" | "LazyVGrid" | "LazyHGrid" | "Grid" | "Group" | "GeometryReader" | "Custom";
     props: Record<string, any>;
     modifiers: Modifier[];
     children: ViewNode[];
