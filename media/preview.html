@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline';">
+    <title>SwiftUI CrossPreview</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #1e1e1e;
+            color: #d4d4d4;
+        }
+        
+        h1 {
+            color: #ffffff;
+            margin-bottom: 10px;
+        }
+        
+        h2 {
+            color: #4fc3f7;
+            margin-top: 0;
+        }
+        
+        #root {
+            background-color: #252526;
+            border-radius: 8px;
+            padding: 20px;
+            min-height: 300px;
+        }
+        
+        .preview-container {
+            margin-top: 20px;
+        }
+        
+        .view-tree-json {
+            background-color: #1e1e1e;
+            border: 1px solid #3e3e42;
+            border-radius: 4px;
+            padding: 15px;
+            overflow-x: auto;
+            font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            color: #d7ba7d;
+        }
+        
+        .status {
+            color: #808080;
+            font-style: italic;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>SwiftUI CrossPreview</h1>
+    <div id="root">
+        <p class="status">Waiting for view tree data...</p>
+    </div>
+    
+    <script>
+        (function() {
+            const vscode = acquireVsCodeApi();
+            const rootElement = document.getElementById('root');
+            
+            // Listen for messages from the extension
+            window.addEventListener('message', event => {
+                const message = event.data;
+                
+                if (message.type === 'render' && message.root) {
+                    renderViewTree(message.root);
+                }
+            });
+            
+            function renderViewTree(root) {
+                // Use the renderToHtml function logic
+                const jsonStr = JSON.stringify(root, null, 2);
+                
+                rootElement.innerHTML = `
+                    <div class="preview-container">
+                        <h2>SwiftUI View Tree</h2>
+                        <pre class="view-tree-json">${escapeHtml(jsonStr)}</pre>
+                    </div>
+                `;
+            }
+            
+            function escapeHtml(unsafe) {
+                return unsafe
+                    .replace(/&/g, "&amp;")
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;")
+                    .replace(/"/g, "&quot;")
+                    .replace(/'/g, "&#039;");
+            }
+            
+            // Send ready message to extension
+            vscode.postMessage({ type: 'ready' });
+            
+            // Example: Test with sample data (can be removed later)
+            setTimeout(() => {
+                const sampleTree = {
+                    kind: "VStack",
+                    props: { spacing: 10 },
+                    modifiers: [
+                        { name: "padding", args: { value: 20 } }
+                    ],
+                    children: [
+                        {
+                            kind: "Text",
+                            props: { content: "Hello, SwiftUI!" },
+                            modifiers: [
+                                { name: "font", args: { style: "title" } }
+                            ],
+                            children: []
+                        },
+                        {
+                            kind: "HStack",
+                            props: {},
+                            modifiers: [],
+                            children: [
+                                {
+                                    kind: "Image",
+                                    props: { systemName: "star.fill" },
+                                    modifiers: [],
+                                    children: []
+                                },
+                                {
+                                    kind: "Text",
+                                    props: { content: "Featured" },
+                                    modifiers: [],
+                                    children: []
+                                }
+                            ]
+                        }
+                    ]
+                };
+                
+                renderViewTree(sampleTree);
+            }, 500);
+        })();
+    </script>
+</body>
+</html>

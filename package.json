@@ -11,15 +11,12 @@
     "Programming Languages",
     "Visualization"
   ],
-  "activationEvents": [
-    "onLanguage:swift"
-  ],
   "main": "./dist/extension.js",
   "contributes": {
     "commands": [
       {
-        "command": "swiftui-crosspreview.openPreview",
-        "title": "SwiftUI: Open Preview"
+        "command": "swiftuiPreview.open",
+        "title": "Open SwiftUI CrossPreview"
       }
     ]
   },
