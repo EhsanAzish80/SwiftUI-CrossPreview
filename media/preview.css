@@ -39,3 +39,36 @@ p {
     color: var(--vscode-descriptionForeground);
     font-style: italic;
 }
+
+/* SwiftUI-style layout */
+.root {
+  padding: 16px;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.vstack {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.hstack {
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+}
+
+.text {
+  padding: 4px 8px;
+  border-radius: 4px;
+  background: #1e1e1e;
+  color: #f5f5f5;
+  font-size: 13px;
+}
+
+.image-placeholder {
+  padding: 8px;
+  border-radius: 4px;
+  border: 1px dashed #888;
+  font-size: 12px;
+}

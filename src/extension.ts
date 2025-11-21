@@ -3,6 +3,8 @@
 // and forward it to renderer/ to produce HTML for the webview.
 
 import * as vscode from 'vscode';
+import { fakeViewTreeFromText } from './parser/viewTree';
+import { renderToHtml } from './renderer/renderHtml';
 
 let currentPanel: vscode.WebviewPanel | undefined = undefined;
 
@@ -33,6 +35,12 @@ export function activate(context: vscode.ExtensionContext) {
             // Get the Swift code
             const swiftCode = editor.document.getText();
             
+            // Create fake ViewNode tree from text
+            const viewTree = fakeViewTreeFromText(swiftCode);
+            
+            // Render to HTML
+            const html = renderToHtml(viewTree);
+            
             // Create or reveal the preview panel
             if (currentPanel) {
                 currentPanel.reveal(vscode.ViewColumn.Two);
@@ -59,10 +67,10 @@ export function activate(context: vscode.ExtensionContext) {
                 });
             }
             
-            // Send the Swift code to the webview
+            // Send the rendered HTML to the webview
             currentPanel.webview.postMessage({
-                type: 'update',
-                code: swiftCode
+                type: 'renderHtml',
+                html: html
             });
         }
     );
@@ -104,22 +112,42 @@ function getPreviewHtml(webview: vscode.Webview, context: vscode.ExtensionContex
             min-height: 300px;
         }
         
-        pre {
-            background-color: #1e1e1e;
-            border: 1px solid #3e3e42;
-            border-radius: 4px;
-            padding: 15px;
-            overflow-x: auto;
-            font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
-            font-size: 13px;
-            line-height: 1.6;
-            color: #d7ba7d;
-            margin: 0;
-        }
-        
         .status {
             color: #808080;
             font-style: italic;
+        }
+        
+        /* SwiftUI-style layout */
+        .root {
+          padding: 16px;
+          font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        .vstack {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+        }
+
+        .hstack {
+          display: flex;
+          flex-direction: row;
+          gap: 8px;
+        }
+
+        .text {
+          padding: 4px 8px;
+          border-radius: 4px;
+          background: #1e1e1e;
+          color: #f5f5f5;
+          font-size: 13px;
+        }
+
+        .image-placeholder {
+          padding: 8px;
+          border-radius: 4px;
+          border: 1px dashed #888;
+          font-size: 12px;
         }
     </style>
 </head>
@@ -135,18 +163,10 @@ function getPreviewHtml(webview: vscode.Webview, context: vscode.ExtensionContex
             
             window.addEventListener('message', event => {
                 const msg = event.data;
-                if (msg.type === 'update') {
-                    const root = document.getElementById('root');
-                    root.innerHTML = '<pre>' + escapeHtml(msg.code) + '</pre>';
+                if (msg.type === 'renderHtml') {
+                    document.getElementById('root').innerHTML = msg.html;
                 }
             });
-            
-            function escapeHtml(str) {
-                return str
-                    .replace(/&/g, '&amp;')
-                    .replace(/</g, '&lt;')
-                    .replace(/>/g, '&gt;');
-            }
         })();
     </script>
 </body>

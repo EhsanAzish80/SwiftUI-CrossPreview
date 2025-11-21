@@ -15,3 +15,22 @@ export interface ViewNode {
     modifiers: Modifier[];
     children: ViewNode[];
 }
+
+/**
+ * TEMP: Creates a fake ViewNode tree from text
+ * Splits code into lines and creates a VStack of Text nodes
+ */
+export function fakeViewTreeFromText(code: string): ViewNode {
+    const lines = code.split("\n").filter(l => l.trim().length > 0);
+    return {
+        kind: "VStack",
+        props: {},
+        modifiers: [],
+        children: lines.map(line => ({
+            kind: "Text",
+            props: { text: line },
+            modifiers: [],
+            children: []
+        }))
+    };
+}
