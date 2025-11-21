@@ -656,6 +656,233 @@ function getPreviewHtml(webview: vscode.Webview, context: vscode.ExtensionContex
           font-weight: 500;
         }
         
+        /* v1.2.0 Input Controls */
+        .slider {
+          width: 100%;
+          height: 28px;
+          -webkit-appearance: none;
+          appearance: none;
+          background: transparent;
+          outline: none;
+        }
+        
+        .slider::-webkit-slider-track {
+          width: 100%;
+          height: 3px;
+          background: #e5e5ea;
+          border-radius: 1.5px;
+        }
+        
+        .slider::-webkit-slider-thumb {
+          -webkit-appearance: none;
+          appearance: none;
+          width: 28px;
+          height: 28px;
+          border-radius: 50%;
+          background: #ffffff;
+          border: 0.5px solid rgba(0, 0, 0, 0.04);
+          box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.04);
+          cursor: pointer;
+        }
+        
+        .slider::-moz-range-track {
+          width: 100%;
+          height: 3px;
+          background: #e5e5ea;
+          border-radius: 1.5px;
+        }
+        
+        .slider::-moz-range-thumb {
+          width: 28px;
+          height: 28px;
+          border-radius: 50%;
+          background: #ffffff;
+          border: 0.5px solid rgba(0, 0, 0, 0.04);
+          box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+          cursor: pointer;
+        }
+        
+        .stepper {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 8px 12px;
+          background: #ffffff;
+          border-radius: 8px;
+          gap: 12px;
+        }
+        
+        .stepper-controls {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+        
+        .stepper-controls button {
+          width: 32px;
+          height: 32px;
+          border-radius: 6px;
+          border: none;
+          background: #e5e5ea;
+          color: #000000;
+          font-size: 18px;
+          font-weight: 400;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        
+        .stepper-controls button:active {
+          background: #d1d1d6;
+        }
+        
+        .stepper-controls span {
+          min-width: 32px;
+          text-align: center;
+          font-weight: 500;
+        }
+        
+        .datepicker, .colorpicker {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 8px 12px;
+          background: #ffffff;
+          border-radius: 8px;
+          gap: 12px;
+        }
+        
+        .datepicker label, .colorpicker label {
+          font-weight: 400;
+          color: #000000;
+        }
+        
+        .datepicker input, .colorpicker input {
+          padding: 6px 8px;
+          border: 1px solid #d1d1d6;
+          border-radius: 6px;
+          font-size: 14px;
+          background: #ffffff;
+        }
+        
+        .colorpicker input[type="color"] {
+          width: 44px;
+          height: 32px;
+          border: none;
+          border-radius: 6px;
+          cursor: pointer;
+        }
+        
+        .progressview {
+          width: 100%;
+          height: 4px;
+          background: #e5e5ea;
+          border-radius: 2px;
+          overflow: hidden;
+          position: relative;
+        }
+        
+        .progressview.indeterminate {
+          height: 20px;
+          background: transparent;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        
+        .progress-bar {
+          height: 100%;
+          background: #007aff;
+          border-radius: 2px;
+          transition: width 0.3s ease;
+        }
+        
+        .progress-spinner {
+          width: 20px;
+          height: 20px;
+          border: 2px solid #e5e5ea;
+          border-top-color: #007aff;
+          border-radius: 50%;
+          animation: spin 0.8s linear infinite;
+        }
+        
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+        
+        .link {
+          color: #007aff;
+          text-decoration: none;
+          cursor: pointer;
+        }
+        
+        .link:hover {
+          text-decoration: underline;
+        }
+        
+        .menu {
+          position: relative;
+          display: inline-block;
+        }
+        
+        .menu-button {
+          padding: 8px 16px;
+          background: #007aff;
+          color: #ffffff;
+          border: none;
+          border-radius: 8px;
+          cursor: pointer;
+          font-size: 14px;
+          font-weight: 500;
+        }
+        
+        .menu-button:hover {
+          background: #0051d5;
+        }
+        
+        .menu-content {
+          display: none;
+          position: absolute;
+          top: 100%;
+          left: 0;
+          margin-top: 4px;
+          background: #ffffff;
+          border-radius: 8px;
+          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+          min-width: 160px;
+          z-index: 1000;
+          padding: 4px;
+        }
+        
+        .menu:hover .menu-content {
+          display: block;
+        }
+        
+        .lazy-vstack {
+          display: flex;
+          flex-direction: column;
+        }
+        
+        .lazy-hstack {
+          display: flex;
+          flex-direction: row;
+        }
+        
+        .grid {
+          display: grid;
+          gap: 8px;
+        }
+        
+        .group {
+          display: contents;
+        }
+        
+        .geometry-reader {
+          width: 100%;
+          height: 100%;
+        }
+        
         .animation-badge {
           position: absolute;
           top: -8px;
@@ -913,6 +1140,122 @@ function getPreviewHtml(webview: vscode.Webview, context: vscode.ExtensionContex
                                 styles.push('cursor: pointer');
                                 styles.push('user-select: none');
                                 break;
+                            case 'position':
+                                if (mod.args.x !== undefined && mod.args.y !== undefined) {
+                                    styles.push('position: absolute');
+                                    styles.push('left: ' + mod.args.x + 'px');
+                                    styles.push('top: ' + mod.args.y + 'px');
+                                }
+                                break;
+                            case 'aspectRatio':
+                                if (mod.args.ratio !== undefined) {
+                                    styles.push('aspect-ratio: ' + mod.args.ratio);
+                                }
+                                if (mod.args.contentMode === 'fit') {
+                                    styles.push('object-fit: contain');
+                                } else if (mod.args.contentMode === 'fill') {
+                                    styles.push('object-fit: cover');
+                                }
+                                break;
+                            case 'scaledToFit':
+                                styles.push('object-fit: contain');
+                                styles.push('width: 100%');
+                                styles.push('height: 100%');
+                                break;
+                            case 'scaledToFill':
+                                styles.push('object-fit: cover');
+                                styles.push('width: 100%');
+                                styles.push('height: 100%');
+                                break;
+                            case 'clipShape':
+                            case 'mask':
+                                if (mod.args.shape === 'circle') {
+                                    styles.push('border-radius: 50%');
+                                    styles.push('overflow: hidden');
+                                } else if (mod.args.shape === 'capsule') {
+                                    styles.push('border-radius: 9999px');
+                                    styles.push('overflow: hidden');
+                                } else if (mod.args.shape === 'roundedRectangle') {
+                                    styles.push('border-radius: 8px');
+                                    styles.push('overflow: hidden');
+                                } else {
+                                    styles.push('overflow: hidden');
+                                }
+                                break;
+                            case 'foregroundStyle':
+                            case 'tint':
+                                if (mod.args.color) {
+                                    styles.push('color: ' + swiftColorToCss(mod.args.color));
+                                }
+                                break;
+                            case 'brightness':
+                                if (mod.args.amount !== undefined) {
+                                    var brightness = 1 + mod.args.amount;
+                                    styles.push('filter: brightness(' + brightness + ')');
+                                }
+                                break;
+                            case 'contrast':
+                                if (mod.args.amount !== undefined) {
+                                    styles.push('filter: contrast(' + mod.args.amount + ')');
+                                }
+                                break;
+                            case 'saturation':
+                                if (mod.args.amount !== undefined) {
+                                    styles.push('filter: saturate(' + mod.args.amount + ')');
+                                }
+                                break;
+                            case 'hueRotation':
+                                if (mod.args.degrees !== undefined) {
+                                    styles.push('filter: hue-rotate(' + mod.args.degrees + 'deg)');
+                                }
+                                break;
+                            case 'onLongPressGesture':
+                                styles.push('cursor: pointer');
+                                styles.push('user-select: none');
+                                break;
+                            case 'disabled':
+                                if (mod.args.isDisabled !== false) {
+                                    styles.push('opacity: 0.5');
+                                    styles.push('pointer-events: none');
+                                }
+                                break;
+                            case 'onAppear':
+                            case 'onDisappear':
+                                // Lifecycle modifiers - no visual effect
+                                break;
+                            case 'fontWeight':
+                                if (mod.args.weight) {
+                                    var weightMap = {
+                                        'ultraLight': '100', 'thin': '200', 'light': '300',
+                                        'regular': '400', 'medium': '500', 'semibold': '600',
+                                        'bold': '700', 'heavy': '800', 'black': '900'
+                                    };
+                                    var cssWeight = weightMap[mod.args.weight] || '400';
+                                    styles.push('font-weight: ' + cssWeight);
+                                }
+                                break;
+                            case 'kerning':
+                            case 'tracking':
+                                if (mod.args.amount !== undefined) {
+                                    styles.push('letter-spacing: ' + mod.args.amount + 'px');
+                                }
+                                break;
+                            case 'baselineOffset':
+                                if (mod.args.offset !== undefined) {
+                                    styles.push('vertical-align: ' + mod.args.offset + 'px');
+                                }
+                                break;
+                            case 'transition':
+                                // Transition modifiers - add transition effect
+                                if (mod.args.type) {
+                                    styles.push('transition: all 0.3s ease');
+                                }
+                                break;
+                            case 'accessibilityLabel':
+                            case 'accessibilityHint':
+                            case 'accessibilityValue':
+                                // Accessibility modifiers - no visual effect
+                                break;
                         }
                     }
                     
@@ -1098,6 +1441,58 @@ function getPreviewHtml(webview: vscode.Webview, context: vscode.ExtensionContex
                             var labelIcon = n.props.systemImage || '';
                             var iconHtml = labelIcon ? '<span class="label-icon">○</span>' : '';
                             baseHtml = '<div class="label"' + style + '>' + iconHtml + '<span class="label-text">' + escapeHtml(labelTitle) + '</span></div>';
+                            break;
+                        case 'Slider':
+                            var sliderValue = n.props.value || 0.5;
+                            var sliderMin = n.props.range ? n.props.range[0] : 0;
+                            var sliderMax = n.props.range ? n.props.range[1] : 1;
+                            baseHtml = '<input type="range" class="slider" min="' + sliderMin + '" max="' + sliderMax + '" value="' + sliderValue + '"' + style + '>';
+                            break;
+                        case 'Stepper':
+                            var stepperLabel = n.props.label || 'Stepper';
+                            var stepperValue = n.props.value || 0;
+                            baseHtml = '<div class="stepper"' + style + '><span>' + escapeHtml(stepperLabel) + '</span><div class="stepper-controls"><button>-</button><span>' + stepperValue + '</span><button>+</button></div></div>';
+                            break;
+                        case 'DatePicker':
+                            var dateLabel = n.props.label || 'Date';
+                            baseHtml = '<div class="datepicker"' + style + '><label>' + escapeHtml(dateLabel) + '</label><input type="date"></div>';
+                            break;
+                        case 'ColorPicker':
+                            var colorLabel = n.props.label || 'Color';
+                            baseHtml = '<div class="colorpicker"' + style + '><label>' + escapeHtml(colorLabel) + '</label><input type="color" value="#007aff"></div>';
+                            break;
+                        case 'ProgressView':
+                            if (n.props.value !== null && n.props.value !== undefined) {
+                                var progressValue = Math.max(0, Math.min(1, n.props.value));
+                                baseHtml = '<div class="progressview"' + style + '><div class="progress-bar" style="width: ' + (progressValue * 100) + '%"></div></div>';
+                            } else {
+                                baseHtml = '<div class="progressview indeterminate"' + style + '><div class="progress-spinner"></div></div>';
+                            }
+                            break;
+                        case 'Link':
+                            var linkTitle = n.props.title || 'Link';
+                            var linkDest = n.props.destination || '#';
+                            baseHtml = '<a href="' + escapeHtml(linkDest) + '" class="link"' + style + '>' + escapeHtml(linkTitle) + '</a>';
+                            break;
+                        case 'Menu':
+                            var menuLabel = n.props.label || 'Menu';
+                            var menuItems = n.children.map(renderNode).join('');
+                            baseHtml = '<div class="menu"' + style + '><button class="menu-button">' + escapeHtml(menuLabel) + ' ▾</button><div class="menu-content">' + menuItems + '</div></div>';
+                            break;
+                        case 'LazyVStack':
+                            baseHtml = '<div class="vstack lazy-vstack"' + style + '>' + n.children.map(renderNode).join('') + '</div>';
+                            break;
+                        case 'LazyHStack':
+                            baseHtml = '<div class="hstack lazy-hstack"' + style + '>' + n.children.map(renderNode).join('') + '</div>';
+                            break;
+                        case 'Grid':
+                            baseHtml = '<div class="grid"' + style + '>' + n.children.map(renderNode).join('') + '</div>';
+                            break;
+                        case 'Group':
+                            baseHtml = '<div class="group"' + style + '>' + n.children.map(renderNode).join('') + '</div>';
+                            break;
+                        case 'GeometryReader':
+                            baseHtml = '<div class="geometry-reader"' + style + '>' + n.children.map(renderNode).join('') + '</div>';
                             break;
                         default:
                             baseHtml = '<div class="custom"' + style + '>' + escapeHtml(n.kind) + '</div>';

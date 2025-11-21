@@ -14,13 +14,16 @@
 
 - **Live preview with auto-update** (300ms debounce) — edit your Swift code and see instant changes
 - **AST-based parsing** using tree-sitter-swift with detailed error messages
-- **Core SwiftUI support**: VStack, HStack, ZStack, Text, Image, Spacer
-- **Rich modifiers**: padding, foregroundColor, background, font, frame, cornerRadius, shadow, opacity, blur, glass materials, overlay, multilineTextAlignment, lineLimit
-- **Stack alignment & spacing**: VStack(alignment: .leading, spacing: 16)
+- **34 SwiftUI views supported**: Including VStack, HStack, ZStack, LazyVStack, LazyHStack, Grid, List, Form, TextField, Slider, Stepper, DatePicker, ColorPicker, ProgressView, Menu, and more
+- **57+ modifiers supported**: Layout, typography, colors, visual effects, animations, interactions, accessibility, and more
+- **Rich visual effects**: Glass materials, gradients, shadows, blur, brightness, contrast, saturation, hue rotation
+- **Input controls**: TextField, SecureField, Slider, Stepper, DatePicker, ColorPicker with native styling
+- **Stack alignment & spacing**: VStack(alignment: .leading, spacing: 16) with full control
 - **15 SwiftUI colors**: red, blue, green, yellow, purple, pink, orange, mint, teal, cyan, indigo, brown, white, gray, black
 - **11 font styles**: largeTitle, title, title2, title3, headline, body, callout, subheadline, footnote, caption, caption2
-- **Device presets** (Phone/Tablet/Desktop) with iPhone-style mockup and Dynamic Island
+- **Device presets** (Phone/Tablet/Desktop/Custom) with iPhone-style mockup and Dynamic Island
 - **Glass/material backgrounds**: .ultraThinMaterial, .thinMaterial, .regularMaterial with backdrop blur
+- **Accessibility support**: accessibilityLabel, accessibilityHint, accessibilityValue for screen readers
 - **HTML/CSS renderer** with dark VS Code-themed UI, shadows, and modern visual effects
 - **Command**: `SwiftUI CrossPreview: Open Preview`
 
