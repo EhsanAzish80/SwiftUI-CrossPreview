@@ -24,14 +24,15 @@
     ]
   },
   "scripts": {
-    "vscode:prepublish": "echo 'Skipping build - using existing dist/'",
+    "vscode:prepublish": "npm run build",
     "build": "node esbuild.config.js",
     "watch": "node esbuild.config.js --watch",
     "compile": "tsc -p .",
     "lint": "eslint src --ext ts",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "package": "vsce package --no-dependencies",
-    "publish": "vsce publish"
+    "package": "vsce package",
+    "publish": "vsce publish",
+    "install:tree-sitter": "npm install --no-optional --ignore-scripts tree-sitter tree-sitter-swift || true"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
@@ -40,11 +41,12 @@
     "@typescript-eslint/parser": "^6.0.0",
     "esbuild": "^0.19.0",
     "eslint": "^8.0.0",
-    "typescript": "^5.0.0",
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
     "tree-sitter": "^0.21.0",
     "tree-sitter-swift": "^0.6.0"
   },
-  "dependencies": {},
   "keywords": [
     "swift",
     "swiftui",

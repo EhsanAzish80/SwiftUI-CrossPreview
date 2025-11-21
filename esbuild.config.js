@@ -6,7 +6,7 @@ const buildOptions = {
   entryPoints: ['src/extension.ts'],
   bundle: true,
   outfile: 'dist/extension.js',
-  external: ['vscode'],
+  external: ['vscode', 'tree-sitter', 'tree-sitter-swift'],
   format: 'cjs',
   platform: 'node',
   sourcemap: true,
