@@ -7,6 +7,9 @@ import { parseSwiftToViewTree } from './parser/swiftParser';
 import { renderToHtml, renderErrorBanner } from './renderer/renderHtml';
 
 let currentPanel: vscode.WebviewPanel | undefined = undefined;
+let currentDocumentUri: vscode.Uri | undefined = undefined;
+let changeSubscription: vscode.Disposable | undefined = undefined;
+let updateTimeout: NodeJS.Timeout | undefined = undefined;
 
 /**
  * Activates the extension
@@ -32,26 +35,8 @@ export function activate(context: vscode.ExtensionContext) {
                 return;
             }
             
-            // Get the Swift code
-            const swiftCode = editor.document.getText();
-            
-            // Parse with tree-sitter
-            const { root, errors } = parseSwiftToViewTree(swiftCode);
-            
-            let html = '';
-            let errorHtml = '';
-            
-            if (root) {
-                html = renderToHtml(root);
-                if (errors.length > 0) {
-                    errorHtml = renderErrorBanner(errors);
-                }
-            } else {
-                // Parse failed completely
-                errorHtml = renderErrorBanner(
-                    errors.length > 0 ? errors : ['Could not parse SwiftUI view']
-                );
-            }
+            // Set current document URI
+            currentDocumentUri = editor.document.uri;
             
             // Create or reveal the preview panel
             if (currentPanel) {
@@ -76,19 +61,92 @@ export function activate(context: vscode.ExtensionContext) {
                 // Handle disposal
                 currentPanel.onDidDispose(() => {
                     currentPanel = undefined;
+                    currentDocumentUri = undefined;
+                    if (changeSubscription) {
+                        changeSubscription.dispose();
+                        changeSubscription = undefined;
+                    }
+                    if (updateTimeout) {
+                        clearTimeout(updateTimeout);
+                        updateTimeout = undefined;
+                    }
                 });
             }
             
-            // Send the rendered HTML to the webview
-            currentPanel.webview.postMessage({
-                type: 'render',
-                html: html,
-                errorHtml: errorHtml
-            });
+            // Start live preview
+            startLivePreviewForDocument(editor.document, currentPanel, context);
         }
     );
 
     context.subscriptions.push(disposable);
+}
+
+/**
+ * Start live preview for a document with auto-update on changes
+ */
+function startLivePreviewForDocument(
+    document: vscode.TextDocument,
+    panel: vscode.WebviewPanel,
+    context: vscode.ExtensionContext
+) {
+    // Dispose existing subscription if any
+    if (changeSubscription) {
+        changeSubscription.dispose();
+    }
+    
+    // Initial render
+    updatePreviewFromDocument(document, panel);
+    
+    // Subscribe to document changes
+    changeSubscription = vscode.workspace.onDidChangeTextDocument(event => {
+        if (currentDocumentUri && event.document.uri.toString() === currentDocumentUri.toString()) {
+            // Debounce updates (300ms)
+            if (updateTimeout) {
+                clearTimeout(updateTimeout);
+            }
+            updateTimeout = setTimeout(() => {
+                updatePreviewFromDocument(event.document, panel);
+            }, 300);
+        }
+    });
+    
+    context.subscriptions.push(changeSubscription);
+}
+
+/**
+ * Update preview from document content
+ */
+function updatePreviewFromDocument(document: vscode.TextDocument, panel: vscode.WebviewPanel) {
+    const source = document.getText();
+    
+    // Parse with tree-sitter
+    const { root, errors } = parseSwiftToViewTree(source);
+    
+    let html = '';
+    let errorHtml = '';
+    let error: string | null = null;
+    
+    if (root) {
+        html = renderToHtml(root);
+        if (errors.length > 0) {
+            errorHtml = renderErrorBanner(errors);
+            error = errors.join('; ');
+        }
+    } else {
+        // Parse failed completely
+        const errorMessages = errors.length > 0 ? errors : ['Could not parse SwiftUI view'];
+        errorHtml = renderErrorBanner(errorMessages);
+        error = errorMessages.join('; ');
+    }
+    
+    // Send to webview
+    panel.webview.postMessage({
+        type: 'render',
+        root: root,
+        html: html,
+        errorHtml: errorHtml,
+        error: error
+    });
 }
 
 /**
@@ -116,6 +174,27 @@ function getPreviewHtml(webview: vscode.Webview, context: vscode.ExtensionContex
             color: #ffffff;
             margin-bottom: 20px;
             font-size: 18px;
+        }
+        
+        #header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            padding: 8px 12px;
+            background-color: #252526;
+            border-radius: 4px;
+        }
+        
+        #status {
+            color: #4ec9b0;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .error {
+            color: #f48771;
+            font-size: 12px;
         }
         
         #errors {
@@ -189,10 +268,18 @@ function getPreviewHtml(webview: vscode.Webview, context: vscode.ExtensionContex
           border: 1px dashed #888;
           font-size: 12px;
         }
+        
+        .spacer {
+          flex: 1;
+        }
     </style>
 </head>
 <body>
     <h1>SwiftUI CrossPreview</h1>
+    <header id="header">
+        <span id="status">Live</span>
+        <span id="error" class="error" style="display:none;"></span>
+    </header>
     <div id="errors"></div>
     <div id="root">
         <p class="status">Waiting for Swift file content...</p>
@@ -202,11 +289,150 @@ function getPreviewHtml(webview: vscode.Webview, context: vscode.ExtensionContex
         (function() {
             const vscode = acquireVsCodeApi();
             
+            // Client-side ViewNode renderer
+            function renderToHtml(node) {
+                if (!node) return '';
+                
+                function buildStyle(n) {
+                    if (!n.modifiers || n.modifiers.length === 0) return '';
+                    
+                    const styles = [];
+                    
+                    for (const mod of n.modifiers) {
+                        switch (mod.name) {
+                            case 'padding':
+                                if (mod.args.all !== undefined) {
+                                    styles.push('padding: ' + mod.args.all + 'px');
+                                } else {
+                                    styles.push('padding: 8px');
+                                }
+                                break;
+                            case 'foregroundColor':
+                                if (mod.args.color) {
+                                    styles.push('color: ' + swiftColorToCss(mod.args.color));
+                                }
+                                break;
+                            case 'background':
+                                if (mod.args.color) {
+                                    styles.push('background-color: ' + swiftColorToCss(mod.args.color));
+                                }
+                                break;
+                            case 'font':
+                                if (mod.args.style) {
+                                    const font = swiftFontStyleToCss(mod.args.style);
+                                    styles.push('font-size: ' + font.fontSize);
+                                    styles.push('font-weight: ' + font.fontWeight);
+                                }
+                                break;
+                            case 'frame':
+                                if (mod.args.width !== undefined) {
+                                    styles.push('width: ' + mod.args.width + 'px');
+                                }
+                                if (mod.args.height !== undefined) {
+                                    styles.push('height: ' + mod.args.height + 'px');
+                                }
+                                break;
+                            case 'cornerRadius':
+                                if (mod.args.radius !== undefined) {
+                                    styles.push('border-radius: ' + mod.args.radius + 'px');
+                                }
+                                break;
+                        }
+                    }
+                    
+                    return styles.length > 0 ? ' style="' + styles.join('; ') + '"' : '';
+                }
+                
+                function swiftColorToCss(color) {
+                    const map = {
+                        'red': '#ff3b30', 'orange': '#ff9500', 'yellow': '#ffcc00',
+                        'green': '#34c759', 'mint': '#00c7be', 'teal': '#30b0c7',
+                        'cyan': '#32ade6', 'blue': '#007aff', 'indigo': '#5856d6',
+                        'purple': '#af52de', 'pink': '#ff2d55', 'brown': '#a2845e',
+                        'white': '#ffffff', 'gray': '#8e8e93', 'black': '#000000',
+                        'clear': 'transparent'
+                    };
+                    return map[color.toLowerCase()] || color;
+                }
+                
+                function swiftFontStyleToCss(style) {
+                    const map = {
+                        'largeTitle': { fontSize: '28px', fontWeight: 'bold' },
+                        'title': { fontSize: '22px', fontWeight: 'bold' },
+                        'title2': { fontSize: '20px', fontWeight: 'bold' },
+                        'title3': { fontSize: '18px', fontWeight: 'semibold' },
+                        'headline': { fontSize: '14px', fontWeight: 'semibold' },
+                        'body': { fontSize: '14px', fontWeight: 'normal' },
+                        'callout': { fontSize: '13px', fontWeight: 'normal' },
+                        'subheadline': { fontSize: '12px', fontWeight: 'normal' },
+                        'footnote': { fontSize: '11px', fontWeight: 'normal' },
+                        'caption': { fontSize: '10px', fontWeight: 'normal' },
+                        'caption2': { fontSize: '10px', fontWeight: 'normal' }
+                    };
+                    return map[style] || { fontSize: '14px', fontWeight: 'normal' };
+                }
+                
+                function renderNode(n) {
+                    const style = buildStyle(n);
+                    
+                    switch (n.kind) {
+                        case 'VStack':
+                            return '<div class="vstack"' + style + '>' + n.children.map(renderNode).join('') + '</div>';
+                        case 'HStack':
+                            return '<div class="hstack"' + style + '>' + n.children.map(renderNode).join('') + '</div>';
+                        case 'Text':
+                            return '<div class="text"' + style + '>' + escapeHtml(n.props.text || '') + '</div>';
+                        case 'Image':
+                            return '<div class="image-placeholder"' + style + '>' + escapeHtml(n.props.name || 'Image') + '</div>';
+                        case 'Spacer':
+                            return '<div class="spacer"' + style + '></div>';
+                        default:
+                            return '<div class="custom"' + style + '>' + escapeHtml(n.kind) + '</div>';
+                    }
+                }
+                
+                function escapeHtml(str) {
+                    return str.replace(/&/g, "&amp;")
+                              .replace(/</g, "&lt;")
+                              .replace(/>/g, "&gt;");
+                }
+                
+                return '<div class="root">' + renderNode(node) + '</div>';
+            }
+            
             window.addEventListener('message', event => {
                 const msg = event.data;
                 if (msg.type === 'render') {
-                    document.getElementById('errors').innerHTML = msg.errorHtml || '';
-                    document.getElementById('root').innerHTML = msg.html || '<p class="status">No preview available.</p>';
+                    const rootEl = document.getElementById('root');
+                    const statusEl = document.getElementById('status');
+                    const errorEl = document.getElementById('error');
+                    const errorsEl = document.getElementById('errors');
+                    
+                    // Update error display
+                    if (msg.error) {
+                        errorEl.textContent = msg.error;
+                        errorEl.style.display = 'inline';
+                    } else {
+                        errorEl.textContent = '';
+                        errorEl.style.display = 'none';
+                    }
+                    
+                    // Update error banner
+                    errorsEl.innerHTML = msg.errorHtml || '';
+                    
+                    // Update root content
+                    if (msg.root) {
+                        rootEl.innerHTML = renderToHtml(msg.root);
+                    } else if (msg.html) {
+                        rootEl.innerHTML = msg.html;
+                    } else {
+                        rootEl.innerHTML = '<div class="empty">No preview available</div>';
+                    }
+                    
+                    // Update status timestamp
+                    if (statusEl) {
+                        statusEl.textContent = 'Live · Last update: ' + new Date().toLocaleTimeString();
+                    }
                 }
             });
         })();

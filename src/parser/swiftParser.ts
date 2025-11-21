@@ -269,18 +269,15 @@ function parsePostfixExpression(node: Parser.SyntaxNode, source: string): ViewNo
         return null;
     }
 
-    // Collect modifiers
+    // Collect modifiers from postfix expressions
     const modifiers: Modifier[] = [];
     
     for (const child of node.children) {
         if (child.type === 'call_suffix') {
-            // This is a modifier like .padding()
-            const modifierName = extractModifierName(child);
-            if (modifierName) {
-                modifiers.push({
-                    name: modifierName,
-                    args: {}
-                });
+            // This is a modifier like .padding() or .foregroundColor(.red)
+            const modifier = parseModifier(child);
+            if (modifier) {
+                modifiers.push(modifier);
             }
         }
     }
@@ -292,7 +289,154 @@ function parsePostfixExpression(node: Parser.SyntaxNode, source: string): ViewNo
 }
 
 /**
- * Extract modifier name from call suffix
+ * Parse a modifier call (e.g., .padding(16), .foregroundColor(.red))
+ */
+function parseModifier(callSuffix: Parser.SyntaxNode): Modifier | null {
+    // Find the modifier name from navigation_suffix
+    let modifierName: string | null = null;
+    
+    for (const child of callSuffix.children) {
+        if (child.type === 'navigation_suffix') {
+            const identifier = child.children.find(c => c.type === 'simple_identifier');
+            if (identifier) {
+                modifierName = identifier.text;
+                break;
+            }
+        }
+    }
+    
+    if (!modifierName) {
+        return null;
+    }
+    
+    // Parse arguments
+    const args: Record<string, any> = {};
+    
+    // Find argument list
+    const argList = callSuffix.children.find(c => 
+        c.type === 'value_arguments' || 
+        c.type === 'argument_list' ||
+        c.type === 'tuple_expression'
+    );
+    
+    if (argList) {
+        const argNodes = argList.children.filter(c => 
+            c.type === 'value_argument' || 
+            c.type === 'simple_identifier' ||
+            c.type === 'integer_literal' ||
+            c.type === 'navigation_expression' ||
+            c.type === 'call_expression'
+        );
+        
+        for (const arg of argNodes) {
+            parseModifierArgument(arg, args, modifierName);
+        }
+    }
+    
+    return {
+        name: modifierName,
+        args
+    };
+}
+
+/**
+ * Parse a single modifier argument and add to args object
+ */
+function parseModifierArgument(node: Parser.SyntaxNode, args: Record<string, any>, modifierName: string) {
+    // Handle labeled arguments like width: 200
+    if (node.type === 'value_argument') {
+        const label = node.children.find(c => c.type === 'value_argument_label');
+        const value = node.children.find(c => 
+            c.type === 'integer_literal' || 
+            c.type === 'float_literal' ||
+            c.type === 'navigation_expression' ||
+            c.type === 'call_expression'
+        );
+        
+        if (label && value) {
+            const labelText = label.text.replace(':', '');
+            if (value.type === 'integer_literal' || value.type === 'float_literal') {
+                args[labelText] = parseFloat(value.text);
+            } else if (value.type === 'navigation_expression' || value.type === 'call_expression') {
+                // Extract color/enum value
+                const colorName = extractEnumValue(value);
+                if (colorName) {
+                    args[labelText] = colorName;
+                }
+            }
+        }
+    }
+    // Handle unlabeled arguments
+    else if (node.type === 'integer_literal' || node.type === 'float_literal') {
+        // Unlabeled numeric argument (e.g., padding(16), cornerRadius(12))
+        const value = parseFloat(node.text);
+        if (modifierName === 'padding') {
+            args.all = value;
+        } else if (modifierName === 'cornerRadius') {
+            args.radius = value;
+        }
+    }
+    // Handle enum-style arguments like .red, .title
+    else if (node.type === 'navigation_expression') {
+        const enumValue = extractEnumValue(node);
+        if (enumValue) {
+            if (modifierName === 'foregroundColor') {
+                args.color = enumValue;
+            } else if (modifierName === 'font') {
+                args.style = enumValue;
+            }
+        }
+    }
+    // Handle Color.blue style
+    else if (node.type === 'call_expression') {
+        const typeName = node.children.find(c => c.type === 'simple_identifier' || c.type === 'navigation_expression');
+        if (typeName && typeName.text === 'Color') {
+            // Look for Color.xxx pattern
+            const colorExpr = node.children.find(c => c.type === 'navigation_expression');
+            if (colorExpr) {
+                const colorName = extractEnumValue(colorExpr);
+                if (colorName && modifierName === 'background') {
+                    args.color = colorName;
+                }
+            }
+        } else {
+            // Try to extract from the whole expression
+            const colorName = extractEnumValue(node);
+            if (colorName && modifierName === 'background') {
+                args.color = colorName;
+            }
+        }
+    }
+}
+
+/**
+ * Extract enum value from expressions like .red, .title, Color.blue
+ */
+function extractEnumValue(node: Parser.SyntaxNode): string | null {
+    const text = node.text;
+    
+    // Handle .red, .title patterns
+    if (text.startsWith('.')) {
+        return text.substring(1);
+    }
+    
+    // Handle Color.red patterns
+    const match = text.match(/Color\.(\w+)/);
+    if (match) {
+        return match[1];
+    }
+    
+    // Try to find the last identifier in navigation
+    const identifiers = node.children.filter(c => c.type === 'simple_identifier');
+    if (identifiers.length > 0) {
+        return identifiers[identifiers.length - 1].text;
+    }
+    
+    return null;
+}
+
+/**
+ * Extract modifier name from call suffix (legacy helper)
  */
 function extractModifierName(node: Parser.SyntaxNode): string | null {
     // Look for navigation_suffix or simple identifier
