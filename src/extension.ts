@@ -16,6 +16,15 @@ let updateTimeout: NodeJS.Timeout | undefined = undefined;
  */
 export function activate(context: vscode.ExtensionContext) {
     console.log('SwiftUI CrossPreview extension is now active');
+    
+    // Test tree-sitter import immediately
+    try {
+        const testParse = parseSwiftToViewTree('struct Test: View { var body: some View { Text("Hello") } }');
+        console.log('Tree-sitter test successful:', testParse.root ? 'OK' : 'Failed');
+    } catch (error) {
+        console.error('Tree-sitter initialization failed:', error);
+        vscode.window.showErrorMessage(`SwiftUI CrossPreview: Failed to initialize parser - ${error}`);
+    }
 
     // Register command to open preview
     const disposable = vscode.commands.registerCommand(
