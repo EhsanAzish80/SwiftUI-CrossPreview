@@ -3,9 +3,8 @@
 // and forward it to renderer/ to produce HTML for the webview.
 
 import * as vscode from 'vscode';
-import { fakeViewTreeFromText } from './parser/viewTree';
 import { parseSwiftToViewTree } from './parser/swiftParser';
-import { renderToHtml } from './renderer/renderHtml';
+import { renderToHtml, renderErrorBanner } from './renderer/renderHtml';
 
 let currentPanel: vscode.WebviewPanel | undefined = undefined;
 
@@ -36,15 +35,23 @@ export function activate(context: vscode.ExtensionContext) {
             // Get the Swift code
             const swiftCode = editor.document.getText();
             
-            // Try to parse with tree-sitter, fall back to fake parser
-            let viewTree = parseSwiftToViewTree(swiftCode);
-            if (!viewTree) {
-                console.log('Tree-sitter parsing failed, using fallback fake parser');
-                viewTree = fakeViewTreeFromText(swiftCode);
-            }
+            // Parse with tree-sitter
+            const { root, errors } = parseSwiftToViewTree(swiftCode);
             
-            // Render to HTML
-            const html = renderToHtml(viewTree);
+            let html = '';
+            let errorHtml = '';
+            
+            if (root) {
+                html = renderToHtml(root);
+                if (errors.length > 0) {
+                    errorHtml = renderErrorBanner(errors);
+                }
+            } else {
+                // Parse failed completely
+                errorHtml = renderErrorBanner(
+                    errors.length > 0 ? errors : ['Could not parse SwiftUI view']
+                );
+            }
             
             // Create or reveal the preview panel
             if (currentPanel) {
@@ -74,8 +81,9 @@ export function activate(context: vscode.ExtensionContext) {
             
             // Send the rendered HTML to the webview
             currentPanel.webview.postMessage({
-                type: 'renderHtml',
-                html: html
+                type: 'render',
+                html: html,
+                errorHtml: errorHtml
             });
         }
     );
@@ -108,6 +116,33 @@ function getPreviewHtml(webview: vscode.Webview, context: vscode.ExtensionContex
             color: #ffffff;
             margin-bottom: 20px;
             font-size: 18px;
+        }
+        
+        #errors {
+            margin-bottom: 16px;
+        }
+        
+        .error-banner {
+            background-color: #5a1d1d;
+            border-left: 4px solid #f48771;
+            padding: 12px 16px;
+            border-radius: 4px;
+            color: #f48771;
+        }
+        
+        .error-banner strong {
+            display: block;
+            margin-bottom: 8px;
+            color: #ffffff;
+        }
+        
+        .error-banner ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+        
+        .error-banner li {
+            margin: 4px 0;
         }
         
         #root {
@@ -158,6 +193,7 @@ function getPreviewHtml(webview: vscode.Webview, context: vscode.ExtensionContex
 </head>
 <body>
     <h1>SwiftUI CrossPreview</h1>
+    <div id="errors"></div>
     <div id="root">
         <p class="status">Waiting for Swift file content...</p>
     </div>
@@ -168,8 +204,9 @@ function getPreviewHtml(webview: vscode.Webview, context: vscode.ExtensionContex
             
             window.addEventListener('message', event => {
                 const msg = event.data;
-                if (msg.type === 'renderHtml') {
-                    document.getElementById('root').innerHTML = msg.html;
+                if (msg.type === 'render') {
+                    document.getElementById('errors').innerHTML = msg.errorHtml || '';
+                    document.getElementById('root').innerHTML = msg.html || '<p class="status">No preview available.</p>';
                 }
             });
         })();

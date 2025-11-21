@@ -14,11 +14,18 @@ function getParser(): Parser {
     return parser;
 }
 
+export interface ParseResult {
+    root: ViewNode | null;
+    errors: string[];
+}
+
 /**
  * Parses Swift source code and extracts a ViewNode tree from SwiftUI View structs
- * Returns null if parsing fails or no valid View body is found
+ * Returns { root, errors } where root is null if parsing fails
  */
-export function parseSwiftToViewTree(source: string): ViewNode | null {
+export function parseSwiftToViewTree(source: string): ParseResult {
+    const errors: string[] = [];
+    
     try {
         const tree = getParser().parse(source);
         const root = tree.rootNode;
@@ -26,26 +33,37 @@ export function parseSwiftToViewTree(source: string): ViewNode | null {
         // Find a struct that conforms to View
         const viewStruct = findViewStruct(root);
         if (!viewStruct) {
-            return null;
+            errors.push('No struct conforming to View protocol found');
+            return { root: null, errors };
         }
 
         // Find the body property
         const bodyProperty = findBodyProperty(viewStruct);
         if (!bodyProperty) {
-            return null;
+            errors.push('No "var body: some View" property found in View struct');
+            return { root: null, errors };
         }
 
         // Extract the main expression from body
         const bodyExpression = findBodyExpression(bodyProperty);
         if (!bodyExpression) {
-            return null;
+            errors.push('Could not extract expression from body property');
+            return { root: null, errors };
         }
 
         // Convert to ViewNode
-        return parseViewExpression(bodyExpression, source);
+        const viewNode = parseViewExpression(bodyExpression, source);
+        if (!viewNode) {
+            errors.push('Body expression is not a supported SwiftUI view (expected VStack with Text children)');
+            return { root: null, errors };
+        }
+
+        return { root: viewNode, errors };
     } catch (error) {
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        errors.push(`Parser exception: ${errorMsg}`);
         console.error('Failed to parse Swift code:', error);
-        return null;
+        return { root: null, errors };
     }
 }
 

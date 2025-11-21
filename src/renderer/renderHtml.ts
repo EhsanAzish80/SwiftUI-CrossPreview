@@ -7,6 +7,17 @@ export function renderToHtml(root: ViewNode): string {
     return `<div class="root">${renderNode(root)}</div>`;
 }
 
+/**
+ * Renders an error banner for parse failures
+ */
+export function renderErrorBanner(errors: string[]): string {
+    const errorItems = errors.map(err => `<li>${escapeHtml(err)}</li>`).join('');
+    return `<div class="error-banner">
+        <strong>Failed to parse SwiftUI body:</strong>
+        <ul>${errorItems}</ul>
+    </div>`;
+}
+
 function renderNode(node: ViewNode): string {
     switch (node.kind) {
         case 'VStack':

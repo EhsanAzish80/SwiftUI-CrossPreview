@@ -20,6 +20,33 @@
             font-size: 18px;
         }
         
+        #errors {
+            margin-bottom: 16px;
+        }
+        
+        .error-banner {
+            background-color: #5a1d1d;
+            border-left: 4px solid #f48771;
+            padding: 12px 16px;
+            border-radius: 4px;
+            color: #f48771;
+        }
+        
+        .error-banner strong {
+            display: block;
+            margin-bottom: 8px;
+            color: #ffffff;
+        }
+        
+        .error-banner ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+        
+        .error-banner li {
+            margin: 4px 0;
+        }
+        
         #root {
             background-color: #252526;
             border-radius: 8px;
@@ -68,6 +95,7 @@
 </head>
 <body>
     <h1>SwiftUI CrossPreview</h1>
+    <div id="errors"></div>
     <div id="root">
         <p class="status">Waiting for Swift file content...</p>
     </div>
@@ -78,8 +106,9 @@
             
             window.addEventListener('message', event => {
                 const msg = event.data;
-                if (msg.type === 'renderHtml') {
-                    document.getElementById('root').innerHTML = msg.html;
+                if (msg.type === 'render') {
+                    document.getElementById('errors').innerHTML = msg.errorHtml || '';
+                    document.getElementById('root').innerHTML = msg.html || '<p class="status">No preview available.</p>';
                 }
             });
         })();

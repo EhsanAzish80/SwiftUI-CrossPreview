@@ -4,7 +4,8 @@ struct HelloVStack: View {
     var body: some View {
         VStack {
             Text("Hello")
-            Text("World")
-        }.padding()
+            Text("CrossPreview")
+        }
+        .padding()
     }
 }
