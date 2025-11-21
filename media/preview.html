@@ -45,6 +45,62 @@
             margin-bottom: 16px;
         }
         
+        #toolbar {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+            padding: 8px 12px;
+            background-color: #252526;
+            border-radius: 4px;
+        }
+        
+        #toolbar button {
+            background-color: #3c3c3c;
+            color: #d4d4d4;
+            border: 1px solid #454545;
+            border-radius: 4px;
+            padding: 6px 12px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        #toolbar button:hover {
+            background-color: #505050;
+        }
+        
+        #toolbar button.active {
+            background-color: #0e639c;
+            border-color: #0e639c;
+            color: #ffffff;
+        }
+        
+        #frame {
+            margin: 0 auto;
+            transition: max-width 0.3s ease;
+        }
+        
+        .device-frame {
+            background-color: #252526;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+        
+        .device-phone {
+            max-width: 390px;
+            border-radius: 24px;
+        }
+        
+        .device-tablet {
+            max-width: 768px;
+            border-radius: 24px;
+        }
+        
+        .device-desktop {
+            max-width: 1024px;
+            border-radius: 8px;
+        }
+        
         .error-banner {
             background-color: #5a1d1d;
             border-left: 4px solid #f48771;
@@ -124,9 +180,16 @@
         <span id="status">Live</span>
         <span id="error" class="error" style="display:none;"></span>
     </header>
+    <div id="toolbar">
+        <button data-device="phone" class="active">Phone</button>
+        <button data-device="tablet">Tablet</button>
+        <button data-device="desktop">Desktop</button>
+    </div>
     <div id="errors"></div>
-    <div id="root">
-        <p class="status">Waiting for Swift file content...</p>
+    <div id="frame" class="device-frame device-phone">
+        <div id="root">
+            <p class="status">Waiting for Swift file content...</p>
+        </div>
     </div>
     
     <script>
@@ -246,7 +309,12 @@
             
             window.addEventListener('message', event => {
                 const msg = event.data;
-                if (msg.type === 'render') {
+                
+                if (msg.type === 'init') {
+                    // Initialize device selection
+                    const device = msg.device || 'phone';
+                    setDevice(device);
+                } else if (msg.type === 'render') {
                     const rootEl = document.getElementById('root');
                     const statusEl = document.getElementById('status');
                     const errorEl = document.getElementById('error');
@@ -278,6 +346,37 @@
                         statusEl.textContent = 'Live · Last update: ' + new Date().toLocaleTimeString();
                     }
                 }
+            });
+            
+            // Device selection handling
+            function setDevice(device) {
+                const frame = document.getElementById('frame');
+                frame.className = 'device-frame device-' + device;
+                
+                // Update button states
+                document.querySelectorAll('#toolbar button').forEach(btn => {
+                    if (btn.dataset.device === device) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+                
+                // Persist selection
+                vscode.setState({ device: device });
+            }
+            
+            // Restore previous device selection
+            const state = vscode.getState();
+            if (state && state.device) {
+                setDevice(state.device);
+            }
+            
+            // Add click handlers to device buttons
+            document.querySelectorAll('#toolbar button').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    setDevice(btn.dataset.device);
+                });
             });
         })();
     </script>

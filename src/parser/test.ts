@@ -1,5 +1,5 @@
 // Quick test to verify parser functionality
-import { parseSwiftUI } from './swiftParser';
+import { parseSwiftToViewTree } from './swiftParser';
 
 const testCode = `
 import SwiftUI
@@ -19,5 +19,5 @@ struct HelloVStack: View {
 }
 `;
 
-const result = parseSwiftUI(testCode);
+const result = parseSwiftToViewTree(testCode);
 console.log(JSON.stringify(result, null, 2));

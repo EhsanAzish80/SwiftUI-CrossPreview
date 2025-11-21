@@ -5,9 +5,16 @@ src/**
 .eslintrc.js
 **/*.map
 **/*.ts
+!dist/**/*.ts
 tsconfig.json
 esbuild.config.js
 node_modules/**
 parser/**/*.ts
 renderer/**/*.ts
+examples/**
+tests/**
 DEVELOPMENT.md
+IMPLEMENTATION.md
+.git/**
+.github/**
+package-lock.json

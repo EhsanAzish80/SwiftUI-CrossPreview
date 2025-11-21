@@ -1,11 +1,11 @@
 {
   "name": "swiftui-crosspreview",
   "displayName": "SwiftUI CrossPreview",
-  "version": "0.1.0",
+  "version": "0.0.2",
   "description": "Cross-platform SwiftUI-style preview for VS Code. Parses SwiftUI and renders an approximate layout in a webview using HTML/CSS, with no Xcode or macOS dependency.",
-  "publisher": "swiftui-crosspreview",
+  "publisher": "ehsan",
   "engines": {
-    "vscode": "^1.75.0"
+    "vscode": "^1.80.0"
   },
   "categories": [
     "Programming Languages",
@@ -21,11 +21,14 @@
     ]
   },
   "scripts": {
-    "vscode:prepublish": "npm run build",
+    "vscode:prepublish": "echo 'Skipping build - using existing dist/'",
     "build": "node esbuild.config.js",
     "watch": "node esbuild.config.js --watch",
+    "compile": "tsc -p .",
     "lint": "eslint src --ext ts",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "package": "vsce package --no-dependencies",
+    "publish": "vsce publish"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
@@ -34,12 +37,11 @@
     "@typescript-eslint/parser": "^6.0.0",
     "esbuild": "^0.19.0",
     "eslint": "^8.0.0",
-    "typescript": "^5.0.0"
-  },
-  "dependencies": {
+    "typescript": "^5.0.0",
     "tree-sitter": "^0.21.0",
     "tree-sitter-swift": "^0.6.0"
   },
+  "dependencies": {},
   "keywords": [
     "swift",
     "swiftui",

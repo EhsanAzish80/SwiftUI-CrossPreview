@@ -14,6 +14,8 @@ The extension now features:
 
 ### Currently Working
 - ✅ **Live Auto-Update** - Preview updates automatically as you type (300ms debounce)
+- ✅ **Device Presets** - Phone (390px), Tablet (768px), Desktop (1024px)
+- ✅ **Device Frame** - Animated transitions with drop shadow
 - ✅ **Tree-sitter Swift Parser** - Robust AST-based parsing with detailed error messages
 - ✅ **Full Modifier Support** - padding, foregroundColor, background, font, frame, cornerRadius
 - ✅ **15 SwiftUI Colors** - red, blue, green, yellow, purple, pink, and more
@@ -59,8 +61,9 @@ struct MyView: View {
 2. Open the Command Palette (Cmd/Ctrl + Shift + P)
 3. Run: **"SwiftUI CrossPreview: Open Preview"**
 4. The preview panel opens on the right showing your rendered SwiftUI view
-5. **Edit your Swift code** - the preview updates automatically!
-6. If parsing fails, a red error banner explains what went wrong
+5. **Select device preset:** Click Phone, Tablet, or Desktop in the toolbar
+6. **Edit your Swift code** - the preview updates automatically!
+7. If parsing fails, a red error banner explains what went wrong
 
 ## Development
 
@@ -93,8 +96,18 @@ Webview Display (media/preview.html)
 - [ ] More view types (Button, List, ScrollView)
 - [ ] More modifiers (opacity, shadow, offset, rotation, alignment)
 - [ ] Spacing parameters for stacks
-- [ ] Device frame presets (iPhone, iPad)
+- [ ] Device frame presets ✅ (completed)
+- [ ] Custom device sizes and orientations
 - [ ] Custom view inlining
-- [ ] Live updates on file change ✅ (completed)
 - [ ] Tokamak/SwiftWasm semantic mode (optional)
 - [ ] Snapshot export for docs/CI
+
+## Packaging
+
+```bash
+npm install -g @vscode/vsce
+npm run compile
+npm run package
+```
+
+This creates a `.vsix` file that can be installed locally or published to the VS Code Marketplace. See `DEVELOPMENT.md` for full packaging instructions.

@@ -41,6 +41,9 @@
 
 3. **Webview (`media/preview.html`)**
    - **Live status header** with timestamp
+   - **Device preset toolbar** with Phone/Tablet/Desktop buttons
+   - **Device frame container** with animated transitions
+   - Device selection persisted via VS Code state API
    - Client-side ViewNode → HTML renderer with full modifier support
    - Receives messages from extension via `window.addEventListener('message')`
    - Updates on every document change (debounced 300ms)
@@ -104,6 +107,9 @@
 - ✅ Singleton panel (reuses existing preview)
 - ✅ Clean subscription management
 - ✅ Inline CSS from modifiers
+- ✅ Device presets (Phone, Tablet, Desktop)
+- ✅ Device frame with animated transitions
+- ✅ Persistent device selection
 
 ### Limitations (by design for MVP)
 
@@ -120,8 +126,9 @@
 - Add more modifiers (opacity, shadow, offset, rotation)
 - Add alignment parameters for stacks
 - Add spacing parameters for VStack/HStack
-- Add device frame presets (iPhone, iPad)
+- Custom device sizes and orientations
 - Support custom view types and inlining
 - Add syntax validation and better error recovery
 - Support for @State and property bindings (read-only preview)
 - Add ZStack layering support
+- Export preview as image/screenshot
