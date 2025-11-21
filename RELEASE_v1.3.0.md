@@ -2,11 +2,40 @@
 
 ## Navigation & App Structure Update
 
-Version 1.3.0 adds comprehensive support for SwiftUI's navigation and app structure components, plus visual indicators for @State and @Binding properties, enabling developers to preview complex multi-screen applications with full state visualization directly in VS Code.
+Version 1.3.0 adds comprehensive support for SwiftUI's navigation and app structure components, plus visual indicators for @State and @Binding properties, plus **one-click PNG export**, enabling developers to preview complex multi-screen applications with full state visualization and share crisp screenshots directly in VS Code.
 
 ---
 
 ## 🎉 What's New
+
+### PNG Export 🎯 KILLER FEATURE
+
+**One-click high-resolution PNG export** - the feature that takes this from "cool extension" to "tool developers rely on"!
+
+```swift
+// Preview your SwiftUI code, then click "📸 Export PNG" in the header
+VStack {
+    Text("Beautiful UI")
+        .font(.largeTitle)
+}
+.padding()
+.background(.ultraThinMaterial)
+.cornerRadius(20)
+```
+
+**Why This Matters:**
+- 📸 **Instant Screenshots** - Export preview as 2x high-res PNG with one click
+- 📝 **Perfect for Docs** - Include crisp UI screenshots in documentation
+- 👥 **Share with Team** - Send visual designs without building/running code
+- 🎨 **Design Reviews** - Quick visual mockups for stakeholder feedback
+- 📱 **Portfolio/Showcase** - Generate images for GitHub, blog posts, portfolios
+
+**Features:**
+- Header-positioned button for quick access (no hunting in menus)
+- 2x resolution for crisp, professional images
+- Auto-timestamped filenames (swiftui-preview-2025-01-21T14-30-45.png)
+- Visual feedback: "⏳ Exporting..." → "✅ Exported!"
+- Captures entire device screen with proper styling
 
 ### State Visualization ⭐ NEW
 

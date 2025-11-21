@@ -17,6 +17,7 @@ Preview your SwiftUI code instantly with automatic updates as you type. Built wi
 📑 **Tab Interfaces** - Interactive TabView with badges  
 🌐 **Remote Content** - AsyncImage for loading images from URLs  
 📦 **State Visualization** - @State, @Binding, and property wrapper badges  
+📸 **PNG Export** - One-click snapshot export for documentation and sharing  
 ♿ **Accessibility** - Screen reader attributes and labels
 
 ---
@@ -258,14 +259,14 @@ Swift Code → Tree-Sitter Parser → ViewNode Tree → HTML/CSS Renderer → VS
 ### Live Update
 Auto-updates preview 300ms after you stop typing. No need to save or rebuild.
 
+### PNG Export
+One-click export to high-resolution PNG (2x scale for crisp images). Perfect for documentation, design reviews, and sharing previews with your team. Click the "📸 Export PNG" button in the header.
+
 ### Error Diagnostics
 Shows clear error messages when Swift code cannot be parsed, with line numbers and suggestions.
 
 ### Device Scaling
 Smart zoom-to-fit ensures your preview always fits the available space.
-
-### Snapshot Export
-Download your preview as PNG image (coming in next release).
 
 ### Comment Support
 Properly handles `//` single-line comments in SwiftUI code.
@@ -284,6 +285,7 @@ Supports nested stacks, ForEach loops, List/Form structures, and conditional ren
 - ✨ TextEditor for multi-line text input
 - ✨ DisclosureGroup for expandable content
 - ✨ State visualization (@State, @Binding, @StateObject badges)
+- ✨ PNG Export (2x high-resolution snapshots)
 - ✨ 14 new modifiers (navigationTitle, tabItem, badge, searchable, and more)
 - 📊 Now supports 42 views and 71+ modifiers
 
@@ -332,13 +334,13 @@ We welcome contributions! Here's how you can help:
 This is a **preview tool**, not a SwiftUI runtime. Some limitations:
 
 - No actual code execution (SwiftUI logic doesn't run)
-- No @State, @Binding, or other property wrappers (static preview only)
+- Property wrappers shown visually but don't execute (@State, @Binding visualized only)
 - Navigation doesn't actually navigate (shows structure only)
 - Button actions don't execute
 - Animations show indicators but don't animate
 - Some advanced SwiftUI features not yet supported
 
-**Best for:** Visual preview, layout exploration, learning, prototyping  
+**Best for:** Visual preview, layout exploration, learning, prototyping, documentation (with PNG export)  
 **Not for:** Debugging logic, testing interactivity, performance profiling
 
 ---

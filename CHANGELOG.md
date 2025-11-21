@@ -6,6 +6,13 @@ All notable changes to the SwiftUI CrossPreview extension will be documented in 
 
 ### Added - Navigation & App Structure
 
+#### PNG Export ⭐ NEW
+- **One-Click Export** - Export preview as high-resolution PNG image (2x scale)
+- **Header Button** - Prominent "📸 Export PNG" button in header for easy access
+- **Auto Timestamp** - Files saved with ISO timestamp (e.g., swiftui-preview-2025-01-21T14-30-45.png)
+- **Visual Feedback** - Button shows "⏳ Exporting..." then "✅ Exported!" confirmation
+- **Perfect for Documentation** - Share crisp previews with team or include in design docs
+
 #### State Visualization ⭐ NEW
 - **@State Badge** - Visual indicator for @State properties with 📦 icon
 - **@Binding Badge** - Visual indicator for @Binding properties with 🔗 icon

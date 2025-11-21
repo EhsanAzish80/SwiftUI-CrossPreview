@@ -39,12 +39,19 @@ export function parseSwiftToViewTree(source: string): ParseResult {
     // Remove single-line comments
     source = removeComments(source);
     
-    // Use tree-sitter if available, otherwise use regex fallback
-    if (useTreeSitter && parser) {
-        return parseWithTreeSitter(source);
-    } else {
-        return parseWithRegex(source);
+    // Try tree-sitter first if available
+    const p = getParser();
+    if (p) {
+        try {
+            return parseWithTreeSitter(source);
+        } catch (error) {
+            console.warn('Tree-sitter parsing failed, falling back to regex parser:', error);
+            // Fall through to regex parser
+        }
     }
+    
+    // Use regex fallback
+    return parseWithRegex(source);
 }
 
 /**
@@ -626,6 +633,22 @@ function parseCallExpression(node: any, source: string): ViewNode | null {
         return parseDisclosureGroup(node, source);
     }
 
+    // Fallback: Handle custom views (like HomeDashboardView(), SettingsFormView(), etc.)
+    // Treat them as Group containers with a placeholder
+    if (functionName && /^[A-Z][a-zA-Z0-9]*View$/.test(functionName)) {
+        return {
+            kind: 'Group',
+            props: { customView: functionName },
+            modifiers: [],
+            children: [{
+                kind: 'Text',
+                props: { text: `<${functionName}>` },
+                modifiers: [],
+                children: []
+            }]
+        };
+    }
+
     return null;
 }
 
@@ -696,6 +719,17 @@ function parseForEach(node: any, source: string): ViewNode {
                 if (stringMatches && stringMatches.length > 0) {
                     props.forEachItems = stringMatches.map(s => s.replace(/"/g, ''));
                     break;
+                }
+                // Check for property reference like "cards" or "items"
+                if (arg.type === 'value_argument') {
+                    const valueArg = arg.children.find(c => c.type === 'simple_identifier');
+                    if (valueArg) {
+                        const propName = valueArg.text;
+                        // Generate placeholder items
+                        props.forEachItems = [`Item 1`, `Item 2`, `Item 3`];
+                        props.arrayProperty = propName;
+                        break;
+                    }
                 }
             }
         }
@@ -1991,7 +2025,7 @@ function parseWithRegex(source: string): ParseResult {
         const root = parseRegexView(bodyContent);
         
         if (!root) {
-            errors.push('Could not parse body content (regex fallback mode - try using native tree-sitter by building on your platform)');
+            errors.push('Could not parse body content. Supported views: VStack, HStack, ZStack, List, Form, ScrollView, NavigationView, NavigationStack, TabView, Text, Button, Toggle, etc.');
             return { root: null, errors };
         }
         
@@ -2005,6 +2039,58 @@ function parseWithRegex(source: string): ParseResult {
 
 function parseRegexView(content: string): ViewNode | null {
     content = content.trim();
+    
+    // Match NavigationView/NavigationStack with their content
+    const navMatch = content.match(/^(NavigationView|NavigationStack)\s*\{/);
+    if (navMatch) {
+        const kind = navMatch[1] as "NavigationView" | "NavigationStack";
+        return parseRegexContainer(content, kind);
+    }
+    
+    // Match TabView with their content
+    const tabViewMatch = content.match(/^TabView\s*\{/);
+    if (tabViewMatch) {
+        return parseRegexContainer(content, 'TabView');
+    }
+    
+    // Match NavigationLink
+    const navLinkMatch = content.match(/^NavigationLink\("([^"]+)"\)/);
+    if (navLinkMatch) {
+        return {
+            kind: 'NavigationLink',
+            props: { label: navLinkMatch[1], destination: '' },
+            modifiers: [],
+            children: []
+        };
+    }
+    
+    // Match AsyncImage
+    const asyncImageMatch = content.match(/^AsyncImage\(url:\s*URL\(string:\s*"([^"]+)"\)\)/);
+    if (asyncImageMatch) {
+        return {
+            kind: 'AsyncImage',
+            props: { url: asyncImageMatch[1] },
+            modifiers: [],
+            children: []
+        };
+    }
+    
+    // Match TextEditor
+    const textEditorMatch = content.match(/^TextEditor\(/);
+    if (textEditorMatch) {
+        return {
+            kind: 'TextEditor',
+            props: { text: 'Enter text...' },
+            modifiers: [],
+            children: []
+        };
+    }
+    
+    // Match DisclosureGroup
+    const disclosureMatch = content.match(/^DisclosureGroup\("([^"]+)"\)/);
+    if (disclosureMatch) {
+        return parseRegexContainer(content, 'DisclosureGroup');
+    }
     
     // Match List/Form/ScrollView with their content
     const containerMatch = content.match(/^(List|Form|ScrollView)\s*\{/);
@@ -2139,13 +2225,29 @@ function parseRegexView(content: string): ViewNode | null {
         };
     }
     
+    // Fallback: Handle custom views (like HomeDashboardView(), SettingsFormView(), etc.)
+    const customViewMatch = content.match(/^([A-Z][a-zA-Z0-9]*View)\s*\(/);
+    if (customViewMatch) {
+        return {
+            kind: 'Group',
+            props: { customView: customViewMatch[1] },
+            modifiers: [],
+            children: [{
+                kind: 'Text',
+                props: { text: `<${customViewMatch[1]}>` },
+                modifiers: [],
+                children: []
+            }]
+        };
+    }
+    
     return null;
 }
 
 /**
- * Parse container views (VStack, HStack, ZStack, List, Form, ScrollView) with regex
+ * Parse container views (VStack, HStack, ZStack, List, Form, ScrollView, NavigationView, TabView, etc.) with regex
  */
-function parseRegexContainer(content: string, kind: "VStack" | "HStack" | "ZStack" | "List" | "Form" | "ScrollView" | "LazyVStack" | "LazyHStack" | "LazyVGrid" | "LazyHGrid" | "Grid" | "Group" | "GeometryReader"): ViewNode {
+function parseRegexContainer(content: string, kind: "VStack" | "HStack" | "ZStack" | "List" | "Form" | "ScrollView" | "LazyVStack" | "LazyHStack" | "LazyVGrid" | "LazyHGrid" | "Grid" | "Group" | "GeometryReader" | "NavigationView" | "NavigationStack" | "TabView" | "DisclosureGroup"): ViewNode {
     const stackProps: Record<string, any> = {};
     
     // Try to parse stack parameters (alignment, spacing) if applicable

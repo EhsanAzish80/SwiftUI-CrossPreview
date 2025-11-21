@@ -238,6 +238,33 @@ function getPreviewHtml(webview: vscode.Webview, context: vscode.ExtensionContex
             font-weight: 500;
         }
         
+        #snapshot-btn-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #ffffff;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+        }
+        
+        #snapshot-btn-header:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        
+        #snapshot-btn-header:active {
+            transform: translateY(0);
+        }
+        
+        #snapshot-btn-header.exporting {
+            background: linear-gradient(135deg, #34c759 0%, #30a14e 100%);
+            pointer-events: none;
+        }
+        
         .error {
             color: #f48771;
             font-size: 12px;
@@ -1181,30 +1208,17 @@ function getPreviewHtml(webview: vscode.Webview, context: vscode.ExtensionContex
         #apply-custom-size:hover {
           background-color: #28a745;
         }
-        
-        #snapshot-btn {
-          background-color: #ff9500;
-          color: #ffffff;
-          border: none;
-          border-radius: 4px;
-          padding: 8px 16px;
-          font-size: 13px;
-          cursor: pointer;
-          font-weight: 500;
-          margin-left: auto;
-        }
-        
-        #snapshot-btn:hover {
-          background-color: #e08600;
-        }
     </style>
 </head>
 <body>
     <h1>SwiftUI CrossPreview</h1>
     <div id="view-name">Previewing: <span id="view-name-text">-</span></div>
     <header id="header">
-        <span id="status">Live</span>
-        <span id="error" class="error" style="display:none;"></span>
+        <div>
+            <span id="status">Live</span>
+            <span id="error" class="error" style="display:none;"></span>
+        </div>
+        <button id="snapshot-btn-header" title="Export preview as PNG image">📸</button>
     </header>
     <div id="errors"></div>
     <div id="bottom-bar">
@@ -1224,7 +1238,6 @@ function getPreviewHtml(webview: vscode.Webview, context: vscode.ExtensionContex
             <input type="number" id="custom-height" placeholder="Height" min="100" max="2000" value="880">
             <button id="apply-custom-size">Apply</button>
         </div>
-        <button id="snapshot-btn" title="Export Snapshot">📸 Snapshot</button>
     </div>
     <div id="device-wrapper">
         <div id="device-bezel" class="device-phone">
@@ -2047,44 +2060,113 @@ function getPreviewHtml(webview: vscode.Webview, context: vscode.ExtensionContex
             });
             
             // Snapshot export handler
-            document.getElementById('snapshot-btn').addEventListener('click', () => {
-                const root = document.getElementById('root');
+            // Snapshot export functionality
+            function exportSnapshot() {
+                const btn = document.getElementById('snapshot-btn-header');
                 const deviceScreen = document.getElementById('device-screen');
+                const deviceBezel = document.getElementById('device-bezel');
                 
-                // Create a temporary canvas
-                const canvas = document.createElement('canvas');
-                const ctx = canvas.getContext('2d');
+                if (!deviceScreen || !deviceBezel) return;
                 
-                // Set canvas size to match device screen
-                canvas.width = deviceScreen.offsetWidth;
-                canvas.height = deviceScreen.offsetHeight;
+                // Update button state
+                btn.textContent = '⏳';
+                btn.classList.add('exporting');
                 
-                // Get computed styles
-                const bgColor = window.getComputedStyle(deviceScreen).backgroundColor;
-                
-                // Fill background
-                ctx.fillStyle = bgColor;
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-                
-                // Convert HTML to image (simplified - just show a message)
-                const dataUrl = canvas.toDataURL('image/png');
-                
-                // Create download link
-                const link = document.createElement('a');
-                link.download = 'swiftui-preview-' + Date.now() + '.png';
-                link.href = dataUrl;
-                link.click();
-                
-                // Show notification
-                const statusEl = document.getElementById('status');
-                const originalText = statusEl.textContent;
-                statusEl.textContent = '📸 Snapshot saved!';
-                statusEl.style.color = '#34c759';
+                // Use html2canvas-like approach (inline implementation)
                 setTimeout(() => {
-                    statusEl.textContent = originalText;
-                    statusEl.style.color = '#4ec9b0';
-                }, 2000);
-            });
+                    const canvas = document.createElement('canvas');
+                    const scale = 2; // 2x resolution for crisp images
+                    
+                    canvas.width = deviceScreen.offsetWidth * scale;
+                    canvas.height = deviceScreen.offsetHeight * scale;
+                    
+                    const ctx = canvas.getContext('2d');
+                    ctx.scale(scale, scale);
+                    
+                    // Get the background color
+                    const bgColor = window.getComputedStyle(deviceScreen).backgroundColor;
+                    ctx.fillStyle = bgColor;
+                    ctx.fillRect(0, 0, deviceScreen.offsetWidth, deviceScreen.offsetHeight);
+                    
+                    // Render text content (simplified but functional approach)
+                    function drawElement(element, offsetX, offsetY) {
+                        const rect = element.getBoundingClientRect();
+                        const screenRect = deviceScreen.getBoundingClientRect();
+                        const x = rect.left - screenRect.left + offsetX;
+                        const y = rect.top - screenRect.top + offsetY;
+                        
+                        const styles = window.getComputedStyle(element);
+                        
+                        // Draw background
+                        if (styles.backgroundColor && styles.backgroundColor !== 'rgba(0, 0, 0, 0)') {
+                            ctx.fillStyle = styles.backgroundColor;
+                            const br = parseFloat(styles.borderRadius) || 0;
+                            if (br > 0) {
+                                roundRect(ctx, x, y, rect.width, rect.height, br);
+                                ctx.fill();
+                            } else {
+                                ctx.fillRect(x, y, rect.width, rect.height);
+                            }
+                        }
+                        
+                        // Draw text
+                        if (element.childNodes.length === 1 && element.childNodes[0].nodeType === 3) {
+                            const text = element.textContent.trim();
+                            if (text) {
+                                ctx.fillStyle = styles.color;
+                                ctx.font = styles.fontSize + ' ' + styles.fontFamily;
+                                ctx.textBaseline = 'top';
+                                ctx.fillText(text, x + parseFloat(styles.paddingLeft), y + parseFloat(styles.paddingTop));
+                            }
+                        }
+                        
+                        // Draw children
+                        for (let child of element.children) {
+                            drawElement(child, offsetX, offsetY);
+                        }
+                    }
+                    
+                    function roundRect(ctx, x, y, width, height, radius) {
+                        ctx.beginPath();
+                        ctx.moveTo(x + radius, y);
+                        ctx.lineTo(x + width - radius, y);
+                        ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+                        ctx.lineTo(x + width, y + height - radius);
+                        ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+                        ctx.lineTo(x + radius, y + height);
+                        ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+                        ctx.lineTo(x, y + radius);
+                        ctx.quadraticCurveTo(x, y, x + radius, y);
+                        ctx.closePath();
+                    }
+                    
+                    // Draw all elements
+                    const root = document.getElementById('root');
+                    if (root) {
+                        drawElement(root, 0, 0);
+                    }
+                    
+                    // Convert to PNG and download
+                    canvas.toBlob((blob) => {
+                        const url = URL.createObjectURL(blob);
+                        const link = document.createElement('a');
+                        const timestamp = new Date().toISOString().slice(0,19).replace(/:/g,'-');
+                        link.download = 'swiftui-preview-' + timestamp + '.png';
+                        link.href = url;
+                        link.click();
+                        URL.revokeObjectURL(url);
+                        
+                        // Reset button
+                        btn.textContent = '✅';
+                        setTimeout(() => {
+                            btn.textContent = '📸';
+                            btn.classList.remove('exporting');
+                        }, 2000);
+                    }, 'image/png');
+                }, 100);
+            }
+            
+            document.getElementById('snapshot-btn-header').addEventListener('click', exportSnapshot);
             
             // Zoom to fit window
             function updateZoom() {
