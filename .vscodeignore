@@ -11,6 +11,7 @@ esbuild.config.js
 node_modules/**
 !node_modules/tree-sitter/**
 !node_modules/tree-sitter-swift/**
+!node_modules/node-gyp-build/**
 parser/**/*.ts
 renderer/**/*.ts
 examples/**
